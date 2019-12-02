@@ -1,5 +1,5 @@
 ---
-title: "Untitled"
+title: "Transfer and Persistence Data Analysis"
 author: "Christian Cole"
 date: "22/11/2019"
 output: pdf_document
@@ -70,6 +70,10 @@ numericFactorOrder <- function(x) {
 
 ## Plotting of Transfer Experiment Results - for ML
 
+Starting with the simplest dataset e.g. with few samples and combinations. Using the combined spreadsheet "20191030DatasetPaper.xlsx" as all the data should be in there and is the source of the paper's figures.
+
+The Transfer experiments are defined by the "Time" column is "0" meaning there has been no Persistence performed yet. By selecting only those that value we can ignore the Persistence experiments (for the time being).
+
 ```{r readML}
 # Read in ML's data
 my.dat = read_xlsx("dat/20191030DatasetPaper.xlsx", sheet = "DataMl")
@@ -78,11 +82,12 @@ my.dat = read_xlsx("dat/20191030DatasetPaper.xlsx", sheet = "DataMl")
 # clear in what they are and don't fit with the rest. Mostly Persistence?
 # TODO - deal with Groups 3-6 later
 transfer.dat = my.dat %>% filter(Time == "00000" & Group %in% c(1,2)) %>% select(c("Substrate", "ActivityID", "ObsType", "Count", "Mass", "Duration", "Group", "Repeat")) 
-transfer.dat
+
+knitr::kable(head(transfer.dat, 20), caption = "'Head' of ML's Transfer Data")
 
 ```
 
-```{r}
+```{r mungeML}
 
 # fix column types
 transfer.dat$Count = as.numeric(transfer.dat$Count)
@@ -111,6 +116,7 @@ final.dat = merge.dat %>% group_by(Mass, Duration, Group, Repeat) %>% summarise(
 
 summ.dat = summarySE(final.dat, measurevar = "Ratio", groupvars = c("Group"))
 
+knitr::kable(summ.dat, caption = "Summary Data for ML Transfer Ratios")
 ```
 
 ```{r plotML}
@@ -120,12 +126,15 @@ ggplot(summ.dat, aes(x = Group, y = Ratio)) +
   geom_errorbar(aes(ymin = Ratio-se, ymax = Ratio+se), width = 0.08) +
   geom_point(colour = "white") +
   scale_x_discrete(labels = c("Wool", "Nylon")) +
-  labs(x = "Receiver Material",
+  labs(title = "Analysis of Transfer Ratios",
+       x = "Receiver Material",
        y = "Transfer Ratio")
 
 ```
 
 ## Read BH Data
+
+In trying to replicate the above for BH's data, I found that the "Time" column didn't make sense (an incrementing value per row) so from now on will use the cleaned data which was used for the file-renamer.
 
 ```{r readBh}
 # Read in Bh's data
@@ -139,10 +148,11 @@ my.dat = rename(my.dat, PersistenceTime = `PersistenceTime (min)`)
 
 # only use the Transfer data (PersistenceTime == "0") 
 transfer.dat = my.dat %>% filter(PersistenceTime == 0) %>% select(c("Substrate", "ObservationType", "Count", "Mass", "TransferTime", "Experiment", "Replicate")) 
-transfer.dat
+
+knitr::kable(head(transfer.dat,20), caption = "'Head' of BH's Transfer Data")
 
 ```
-```{r}
+```{r mungeBH}
 # fix column types
 transfer.dat$Count = as.numeric(transfer.dat$Count)
 transfer.dat$Experiment = as.character(transfer.dat$Experiment)
@@ -170,9 +180,9 @@ final.dat = merge.dat %>% group_by(Mass, TransferTime, Substrate, Replicate) %>%
 
 ratio.dat = summarySE(final.dat, measurevar = "Ratio", groupvars = c("Mass","TransferTime","Substrate"))
 
-ratio.dat
+knitr::kable(ratio.dat, caption = "Summary Data for BH Transfer Ratios")
 ```
-```{r}
+```{r plottBH}
 
 ggplot(ratio.dat, aes(x = numericFactorOrder(TransferTime), y = Ratio)) + 
   geom_point(size=1) +
@@ -186,7 +196,7 @@ ggplot(ratio.dat, aes(x = numericFactorOrder(TransferTime), y = Ratio)) +
 
 
 ```
-```{r}
+```{r ploteBH}
 
 eff.dat = summarySE(final.dat, measurevar = "Efficiency", groupvars = c("Mass","TransferTime","Substrate"))
 
@@ -208,7 +218,7 @@ ggplot(eff.dat, aes(x = numericFactorOrder(TransferTime), y = Efficiency)) +
 
 
 ```{r readSg}
-# Read in Bh's data
+# Read in Sg's data
 my.dat = read_xlsx("dat/StrSgCleanDataset.xlsx", sheet = "Data", trim_ws = TRUE, col_types = "text")
 
 # Fix the column name for Time - seems to have extra spaces
@@ -223,12 +233,12 @@ transfer.dat = my.dat %>% filter(PersistenceTime == 0) %>% select(c("Substrate",
 # also remove expt 16 as it is incomplete
 transfer.dat = transfer.dat[as.numeric(transfer.dat$Experiment) < 16,]
 
-transfer.dat
+knitr::kable(head(transfer.dat,20), caption = "'Head' of SG's Transfer Data")
 
 ```
 
 
-```{r}
+```{r mungeSG}
 # fix column types
 transfer.dat$Count = as.numeric(transfer.dat$Count)
 transfer.dat$Experiment = as.character(transfer.dat$Experiment)
@@ -256,10 +266,10 @@ final.dat = merge.dat %>% group_by(Mass, TransferTime, Substrate, Replicate) %>%
 
 ratio.dat = summarySE(final.dat, measurevar = "Ratio", groupvars = c("Mass","TransferTime","Substrate"))
 
-ratio.dat
+knitr::kable(ratio.dat, caption = "Summary Data for SG Transfer Ratios")
 ```
 
-```{r}
+```{r plottSG}
 
 ggplot(ratio.dat, aes(x = numericFactorOrder(TransferTime), y = Ratio)) + 
   geom_point(size=1) +
@@ -274,11 +284,10 @@ ggplot(ratio.dat, aes(x = numericFactorOrder(TransferTime), y = Ratio)) +
 
 ```
 
-```{r}
+```{r ploteSG}
 
 eff.dat = summarySE(final.dat, measurevar = "Efficiency", groupvars = c("Mass","TransferTime","Substrate"))
 
-eff.dat
 ggplot(eff.dat, aes(x = numericFactorOrder(TransferTime), y = Efficiency)) + 
   geom_point(size=1) +
   geom_errorbar(aes(ymin = Efficiency-se, ymax = Efficiency+se), width = 0.08) +
@@ -310,11 +319,11 @@ transfer.dat = my.dat %>% filter(PersistenceTime == 0) %>% select(c("Substrate",
 # also remove expt 16 as it is incomplete
 transfer.dat = transfer.dat[as.numeric(transfer.dat$Experiment) < 16,]
 
-transfer.dat
+knitr::kable(head(transfer.dat, 20), caption = "'Head' of EM's Transfer Data")
 
 ```
 
-```{r}
+```{r mungeEM}
 # fix column types
 transfer.dat$Count = as.numeric(transfer.dat$Count)
 transfer.dat$Experiment = as.character(transfer.dat$Experiment)
@@ -342,12 +351,12 @@ final.dat = merge.dat %>% group_by(Mass, TransferTime, Experiment, Substrate, Re
 
 ratio.dat = summarySE(final.dat, measurevar = "Ratio", groupvars = c("Mass","TransferTime","Substrate"))
 
-knitr::kable(ratio.dat)
+knitr::kable(ratio.dat, caption = "Summary Data for EM Transfer Ratios")
 ```
 
 Added an extra column for "Experiment" in addition to "Substrate" here as there seems to be too many replicates?? Need to investigate further.
 
-```{r}
+```{r plottEM}
 
 ggplot(ratio.dat, aes(x = numericFactorOrder(TransferTime), y = Ratio)) + 
   geom_point(size=1) +
@@ -361,7 +370,7 @@ ggplot(ratio.dat, aes(x = numericFactorOrder(TransferTime), y = Ratio)) +
 
 
 ```
-```{r}
+```{r ploteEM}
 
 eff.dat = summarySE(final.dat, measurevar = "Efficiency", groupvars = c("Mass","TransferTime","Substrate"))
 
@@ -378,3 +387,4 @@ ggplot(eff.dat, aes(x = numericFactorOrder(TransferTime), y = Efficiency)) +
 
 
 ```
+
