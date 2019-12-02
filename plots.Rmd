@@ -10,9 +10,8 @@ knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 # libraries
 library(readxl)
 library(plyr)
-library(dplyr)
-library(reshape2)
 library(ggplot2)
+library(dplyr)
 ```
 
 ```{r functions}
@@ -44,7 +43,7 @@ summarySE <- function(data=NULL, measurevar, groupvars=NULL, na.rm=FALSE,
     )
 
     # Rename the "mean" column    
-    datac <- rename(datac, c("mean" = measurevar))
+    datac <- plyr::rename(datac, c("mean" = measurevar))
 
     datac$se <- datac$sd / sqrt(datac$N)  # Calculate standard error of the mean
 
@@ -96,7 +95,9 @@ merge.dat = data.frame(p1, p2$Count, p3$Count, p4$Count, p5$Count)
 names(merge.dat) = c("Mass","Duration","Group","Repeat","P1","P2","P3","P4","P5")
 
 # calculate the Transfer Ratios and Efficiencies
-final.dat = merge.dat %>% group_by(Mass, Duration, Group, Repeat) %>% summarise(Mass, Duration, Group, Repeat, Donor = P3 - P1, Receiver = P5 - P2, Donor_post = P3 - P4) %>% mutate(Ratio = Receiver/Donor, Efficiency = Receiver/Donor_post)
+# NB: the summarise() function can be problematic here, if plyr is loaded
+#     after dplyr. Check that first if this stops working.
+final.dat = merge.dat %>% group_by(Mass, Duration, Group, Repeat) %>% summarise(Donor = P3 - P1, Receiver = P5 - P2, Donor_post = P3 - P4) %>% mutate(Ratio = Receiver/Donor, Efficiency = Receiver/Donor_post)
 
 summ.dat = summarySE(final.dat, measurevar = "Ratio", groupvars = c("Group"))
 
@@ -115,7 +116,7 @@ ggplot(summ.dat, aes(x = Group, y = Ratio)) +
 ```
 
 
-```{r readBh}
+```{r readBh, eval=FALSE}
 # Read in ML's data
 my.dat = read_xlsx("dat/20191030DatasetPaper.xlsx", sheet = "DataBh", trim_ws = TRUE, col_types = "text")
 
