@@ -68,7 +68,7 @@ numericFactorOrder <- function(x) {
 ```
 
 
-## Plotting of Transfer Experiment Results
+## Plotting of Transfer Experiment Results - for ML
 
 ```{r readML}
 # Read in ML's data
@@ -125,8 +125,9 @@ ggplot(summ.dat, aes(x = Group, y = Ratio)) +
 
 ```
 
+## Read BH Data
 
-```{r readBh, eval=FALSE}
+```{r readBh}
 # Read in Bh's data
 my.dat = read_xlsx("dat/NorBhCleanDataset.xlsx", sheet = "Data", trim_ws = TRUE, col_types = "text")
 
@@ -178,7 +179,8 @@ ggplot(ratio.dat, aes(x = numericFactorOrder(TransferTime), y = Ratio)) +
   geom_errorbar(aes(ymin = Ratio-se, ymax = Ratio+se), width = 0.08) +
   geom_point(colour = "white", size = 0.7) +
 #  scale_x_discrete(labels = c("Wool", "Nylon")) +
-  labs(x = "Transfer Time (s)",
+  labs(title = "Analysis of Transfer Ratio",
+       x = "Transfer Time (s)",
        y = "Transfer Ratio") +
   facet_grid(numericFactorOrder(Mass) ~ Substrate)
 
@@ -194,14 +196,98 @@ ggplot(eff.dat, aes(x = numericFactorOrder(TransferTime), y = Efficiency)) +
   geom_errorbar(aes(ymin = Efficiency-se, ymax = Efficiency+se), width = 0.08) +
   geom_point(colour = "white", size = 0.7) +
 #  scale_x_discrete(labels = c("Wool", "Nylon")) +
-  labs(x = "Transfer Time (s)",
+  labs(title = "Analysis of Transfer Efficiency",
+       x = "Transfer Time (s)",
        y = "Efficiency") +
   facet_grid(numericFactorOrder(Mass) ~ Substrate)
 
 
 ```
 
+## SG Data
 
 
+```{r readSg}
+# Read in Bh's data
+my.dat = read_xlsx("dat/StrSgCleanDataset.xlsx", sheet = "Data", trim_ws = TRUE, col_types = "text")
+
+# Fix the column name for Time - seems to have extra spaces
+my.dat = rename(my.dat, Mass = `Mass (g)`)
+my.dat = rename(my.dat, TransferTime = `TransferTime (s)`)
+my.dat = rename(my.dat, PersistenceTime = `PersistenceTime (min)`)
+#colnames(my.dat)
+
+# only use the Transfer data (PersistenceTime == "0") 
+transfer.dat = my.dat %>% filter(PersistenceTime == 0) %>% select(c("Substrate", "ObservationType", "Count", "Mass", "TransferTime", "Experiment", "Replicate"))
+
+# also remove expt 16 as it is incomplete
+transfer.dat = transfer.dat[as.numeric(transfer.dat$Experiment) < 16,]
+
+transfer.dat
+
+```
 
 
+```{r}
+# fix column types
+transfer.dat$Count = as.numeric(transfer.dat$Count)
+transfer.dat$Experiment = as.character(transfer.dat$Experiment)
+transfer.dat$Replicate = as.character(transfer.dat$Replicate)
+
+# add a photoID column to keep track of which datapoint is which
+photo.id = rep(paste0("P", seq(1:5)), as.integer(nrow(transfer.dat)/5+1))
+transfer.dat = data.frame(PhotoID = photo.id[1:nrow(transfer.dat)], transfer.dat)
+
+# split out each set of photos...
+p1 = transfer.dat %>% filter(PhotoID == "P1") %>% select(Mass,TransferTime,Substrate,Experiment,Replicate,Count)
+p2 = transfer.dat %>% filter(PhotoID == "P2") %>% select(Mass,TransferTime,Substrate,Experiment,Replicate,Count)
+p3 = transfer.dat %>% filter(PhotoID == "P3") %>% select(Mass,TransferTime,Substrate,Experiment,Replicate,Count)
+p4 = transfer.dat %>% filter(PhotoID == "P4") %>% select(Mass,TransferTime,Substrate,Experiment,Replicate,Count)
+p5 = transfer.dat %>% filter(PhotoID == "P5") %>% select(Mass,TransferTime,Substrate,Experiment,Replicate,Count)
+
+# ...and merge
+merge.dat = data.frame(p5[,c("Mass","TransferTime","Substrate","Experiment","Replicate")], p1$Count, p2$Count, p3$Count, p4$Count, p5$Count)
+names(merge.dat) = c("Mass","TransferTime","Substrate","Experiment","Replicate","P1","P2","P3","P4","P5")
+
+# calculate the Transfer Ratios and Efficiencies
+# NB: the summarise() function can be problematic here, if plyr is loaded
+#     after dplyr. Check that first if this stops working.
+final.dat = merge.dat %>% group_by(Mass, TransferTime, Substrate, Replicate) %>% summarise(Donor = P3 - P1, Receiver = P5 - P2, Donor_post = P3 - P4) %>% mutate(Ratio = Receiver/Donor, Efficiency = Receiver/Donor_post)
+
+ratio.dat = summarySE(final.dat, measurevar = "Ratio", groupvars = c("Mass","TransferTime","Substrate"))
+
+ratio.dat
+```
+
+```{r}
+
+ggplot(ratio.dat, aes(x = numericFactorOrder(TransferTime), y = Ratio)) + 
+  geom_point(size=1) +
+  geom_errorbar(aes(ymin = Ratio-se, ymax = Ratio+se), width = 0.08) +
+  geom_point(colour = "white", size = 0.7) +
+#  scale_x_discrete(labels = c("Wool", "Nylon")) +
+  labs(title = "Analysis of Transfer Ratio",
+       x = "Transfer Time (s)",
+       y = "Transfer Ratio") +
+  facet_grid(numericFactorOrder(Mass) ~ Substrate)
+
+
+```
+
+```{r}
+
+eff.dat = summarySE(final.dat, measurevar = "Efficiency", groupvars = c("Mass","TransferTime","Substrate"))
+
+eff.dat
+ggplot(eff.dat, aes(x = numericFactorOrder(TransferTime), y = Efficiency)) + 
+  geom_point(size=1) +
+  geom_errorbar(aes(ymin = Efficiency-se, ymax = Efficiency+se), width = 0.08) +
+  geom_point(colour = "white", size = 0.7) +
+#  scale_x_discrete(labels = c("Wool", "Nylon")) +
+  labs(title = "Analysis of Transfer Efficiency",
+       x = "Transfer Time (s)",
+       y = "Efficiency") +
+  facet_grid(numericFactorOrder(Mass) ~ Substrate)
+
+
+```
