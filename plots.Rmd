@@ -68,6 +68,13 @@ numericFactorOrder <- function(x) {
   
 }
 
+## calc std error
+stdErr = function(x) {
+  sd = sd(x)
+  n = length(x)
+  return(sd/sqrt(n))
+}
+
 ```
 
 
@@ -84,7 +91,12 @@ my.dat = read_xlsx("dat/20191030DatasetPaper.xlsx", sheet = "DataMl")
 # only use the transfer experiments for Groups 1 & 2. Groups 3-6 are not 
 # clear in what they are and don't fit with the rest. Mostly Persistence?
 # TODO - deal with Groups 3-6 later
-transfer.dat = my.dat %>% filter(Time == "00000" & Group %in% c(1,2)) %>% select(c("Substrate", "ActivityID", "ObsType", "Count", "Mass", "Duration", "Group", "Repeat")) 
+transfer.dat = my.dat %>% filter(Time == "00000" & Group %in% c(1,2)) %>%
+  select(c("Substrate", "ObsType", "Count", "Mass", "Duration", "Group", "Repeat")) %>%
+  rename(ObservationType = ObsType, 
+         TransferTime = Duration,
+         Experiment = Group,
+         Replicate = Repeat)
 
 knitr::kable(head(transfer.dat, 20), caption = "'Head' of ML's Transfer Data")
 
@@ -94,37 +106,40 @@ knitr::kable(head(transfer.dat, 20), caption = "'Head' of ML's Transfer Data")
 
 # fix column types
 transfer.dat$Count = as.numeric(transfer.dat$Count)
-transfer.dat$Group = as.character(transfer.dat$Group)
-transfer.dat$Repeat = as.character(transfer.dat$Repeat)
+transfer.dat$Experiment = as.character(transfer.dat$Experiment)
+transfer.dat$Replicate = as.character(transfer.dat$Replicate)
 
 # add a photoID column to keep track of which datapoint is which
 photo.id = rep(paste0("P", seq(1:5)), as.integer(nrow(transfer.dat)/5+1))
 transfer.dat = data.frame(PhotoID = photo.id[1:nrow(transfer.dat)], transfer.dat)
 
 # split out each set of photos...
-p1 = transfer.dat %>% filter(PhotoID == "P1") %>% select(Mass,Duration,Group,Repeat,Count)
-p2 = transfer.dat %>% filter(PhotoID == "P2") %>% select(Mass,Duration,Group,Repeat,Count)
-p3 = transfer.dat %>% filter(PhotoID == "P3") %>% select(Mass,Duration,Group,Repeat,Count)
-p4 = transfer.dat %>% filter(PhotoID == "P4") %>% select(Mass,Duration,Group,Repeat,Count)
-p5 = transfer.dat %>% filter(PhotoID == "P5") %>% select(Mass,Duration,Group,Repeat,Count)
+p1 = transfer.dat %>% filter(PhotoID == "P1") %>% select(Mass,TransferTime,Substrate,Experiment,Replicate,Count)
+p2 = transfer.dat %>% filter(PhotoID == "P2") %>% select(Mass,TransferTime,Substrate,Experiment,Replicate,Count)
+p3 = transfer.dat %>% filter(PhotoID == "P3") %>% select(Mass,TransferTime,Substrate,Experiment,Replicate,Count)
+p4 = transfer.dat %>% filter(PhotoID == "P4") %>% select(Mass,TransferTime,Substrate,Experiment,Replicate,Count)
+p5 = transfer.dat %>% filter(PhotoID == "P5") %>% select(Mass,TransferTime,Substrate,Experiment,Replicate,Count)
 
 # ...and merge
-merge.dat = data.frame(p1, p2$Count, p3$Count, p4$Count, p5$Count)
-names(merge.dat) = c("Mass","Duration","Group","Repeat","P1","P2","P3","P4","P5")
+merge.dat = data.frame(p5[,c("Mass","TransferTime","Substrate","Experiment","Replicate")], p1$Count, p2$Count, p3$Count, p4$Count, p5$Count)
+names(merge.dat) = c("Mass","TransferTime","Substrate","Experiment","Replicate","P1","P2","P3","P4","P5")
+
+all.dat = cbind(Name = rep("A",nrow(merge.dat)), merge.dat)
+
 
 # calculate the Transfer Ratios and Efficiencies
 # NB: the summarise() function can be problematic here, if plyr is loaded
 #     after dplyr. Check that first if this stops working.
-final.dat = merge.dat %>% group_by(Mass, Duration, Group, Repeat) %>% summarise(Donor = P3 - P1, Receiver = P5 - P2, Donor_post = P3 - P4) %>% mutate(Ratio = Receiver/Donor, Efficiency = Receiver/Donor_post)
+final.dat = merge.dat %>% group_by(Mass, TransferTime, Experiment, Replicate) %>% summarise(Donor = P3 - P1, Receiver = P5 - P2, Donor_post = P3 - P4) %>% mutate(Ratio = Receiver/Donor, Efficiency = Receiver/Donor_post)
 
-summ.dat = summarySE(final.dat, measurevar = "Ratio", groupvars = c("Group"))
+summ.dat = summarySE(final.dat, measurevar = "Ratio", groupvars = c("Experiment"))
 
 knitr::kable(summ.dat, caption = "Summary Data for ML Transfer Ratios")
 ```
 
 ```{r plotML}
 
-ggplot(summ.dat, aes(x = Group, y = Ratio)) + 
+ggplot(summ.dat, aes(x = Experiment, y = Ratio)) + 
   geom_point(size=2.2) +
   geom_errorbar(aes(ymin = Ratio-se, ymax = Ratio+se), width = 0.08) +
   geom_point(colour = "white") +
@@ -137,10 +152,10 @@ ggplot(summ.dat, aes(x = Group, y = Ratio)) +
 
 ```{r ploteML}
 
-eff.dat = summarySE(final.dat, measurevar = "Efficiency", groupvars = c("Group"))
+eff.dat = summarySE(final.dat, measurevar = "Efficiency", groupvars = c("Experiment"))
 
 #eff.dat
-ggplot(eff.dat, aes(x = Group, y = Efficiency)) + 
+ggplot(eff.dat, aes(x = Experiment, y = Efficiency)) + 
   geom_point(size=1) +
   geom_errorbar(aes(ymin = Efficiency-se, ymax = Efficiency+se), width = 0.08) +
   geom_point(colour = "white", size = 0.7) +
@@ -175,7 +190,11 @@ my.dat = read_xlsx("dat/20191030DatasetPaper.xlsx", sheet = "DataSd", trim_ws = 
 # only use the transfer experiments for Groups 8-22. Groups 1-7 have no 
 # count data and group 23 is incomplete, only one replicate
 # TODO - deal with Groups 3-6 later
-transfer.dat = my.dat %>% filter(Time == 0 & Group > 8 & Group < 23) %>% select(c("Substrate", "ActivityID", "ObsType", "Count", "Mass", "Duration", "Group", "Repeat")) 
+transfer.dat = my.dat %>% filter(Time == 0 & Group > 8 & Group < 23) %>% select(c("Substrate", "ObsType", "Count", "Mass", "Duration", "Group", "Repeat")) %>%
+  rename(ObservationType = ObsType, 
+         TransferTime = Duration,
+         Experiment = Group,
+         Replicate = Repeat)
 
 knitr::kable(head(transfer.dat, 20), caption = "'Head' of SD's Transfer Data")
 
@@ -184,10 +203,10 @@ knitr::kable(head(transfer.dat, 20), caption = "'Head' of SD's Transfer Data")
 
 # fix column types
 transfer.dat$Count = as.numeric(transfer.dat$Count)
-transfer.dat$Duration = as.numeric(transfer.dat$Duration)
+transfer.dat$TransferTime = as.numeric(transfer.dat$TransferTime)
 transfer.dat$Mass = as.numeric(transfer.dat$Mass)
-transfer.dat$Group = as.character(transfer.dat$Group)
-transfer.dat$Repeat = as.character(transfer.dat$Repeat)
+transfer.dat$Experiment = as.character(transfer.dat$Experiment)
+transfer.dat$Replicate = as.character(transfer.dat$Replicate)
 
 # rename Denm01 to Deni01 to match others
 transfer.dat[transfer.dat$Substrate == "Denm01", 1] <- "Deni01"
@@ -197,20 +216,22 @@ photo.id = rep(paste0("P", seq(1:5)), as.integer(nrow(transfer.dat)/5+1))
 transfer.dat = data.frame(PhotoID = photo.id[1:nrow(transfer.dat)], transfer.dat)
 
 # split out each set of photos...
-p1 = transfer.dat %>% filter(PhotoID == "P1") %>% select(Mass,Duration,Substrate,Group,Repeat,Count)
-p2 = transfer.dat %>% filter(PhotoID == "P2") %>% select(Mass,Duration,Substrate,Group,Repeat,Count)
-p3 = transfer.dat %>% filter(PhotoID == "P3") %>% select(Mass,Duration,Substrate,Group,Repeat,Count)
-p4 = transfer.dat %>% filter(PhotoID == "P4") %>% select(Mass,Duration,Substrate,Group,Repeat,Count)
-p5 = transfer.dat %>% filter(PhotoID == "P5") %>% select(Mass,Duration,Substrate,Group,Repeat,Count)
+p1 = transfer.dat %>% filter(PhotoID == "P1") %>% select(Mass,TransferTime,Substrate,Experiment,Replicate,Count)
+p2 = transfer.dat %>% filter(PhotoID == "P2") %>% select(Mass,TransferTime,Substrate,Experiment,Replicate,Count)
+p3 = transfer.dat %>% filter(PhotoID == "P3") %>% select(Mass,TransferTime,Substrate,Experiment,Replicate,Count)
+p4 = transfer.dat %>% filter(PhotoID == "P4") %>% select(Mass,TransferTime,Substrate,Experiment,Replicate,Count)
+p5 = transfer.dat %>% filter(PhotoID == "P5") %>% select(Mass,TransferTime,Substrate,Experiment,Replicate,Count)
 
 # ...and merge
-merge.dat = data.frame(p5[,c("Mass","Duration","Substrate","Group","Repeat")], p1$Count, p2$Count, p3$Count, p4$Count, p5$Count)
-names(merge.dat) = c("Mass","TransferTime","Substrate","Group","Repeat","P1","P2","P3","P4","P5")
+merge.dat = data.frame(p5[,c("Mass","TransferTime","Substrate","Experiment","Replicate")], p1$Count, p2$Count, p3$Count, p4$Count, p5$Count)
+names(merge.dat) = c("Mass","TransferTime","Substrate","Experiment","Replicate","P1","P2","P3","P4","P5")
+
+all.dat = rbind(all.dat, data.frame(Name = rep("B",nrow(merge.dat)), merge.dat))
 
 # calculate the Transfer Ratios and Efficiencies
 # NB: the summarise() function can be problematic here, if plyr is loaded
 #     after dplyr. Check that first if this stops working.
-final.dat = merge.dat %>% group_by(Mass, TransferTime, Substrate, Repeat) %>% summarise(Donor = P3 - P1, Receiver = P5 - P2, Donor_post = P3 - P4) %>% mutate(Ratio = Receiver/Donor, Efficiency = Receiver/Donor_post)
+final.dat = merge.dat %>% group_by(Mass, TransferTime, Substrate, Replicate) %>% summarise(Donor = P3 - P1, Receiver = P5 - P2, Donor_post = P3 - P4) %>% mutate(Ratio = Receiver/Donor, Efficiency = Receiver/Donor_post)
 
 ratio.dat = summarySE(final.dat, measurevar = "Ratio", groupvars = c("Mass", "TransferTime", "Substrate"))
 ratio.dat = cbind(Name = rep("B", nrow(ratio.dat)), ratio.dat)
@@ -292,6 +313,8 @@ p5 = transfer.dat %>% filter(PhotoID == "P5") %>% select(Mass,TransferTime,Subst
 # ...and merge
 merge.dat = data.frame(p5[,c("Mass","TransferTime","Substrate","Experiment","Replicate")], p1$Count, p2$Count, p3$Count, p4$Count, p5$Count)
 names(merge.dat) = c("Mass","TransferTime","Substrate","Experiment","Replicate","P1","P2","P3","P4","P5")
+
+all.dat = rbind(all.dat, data.frame(Name = rep("C",nrow(merge.dat)), merge.dat))
 
 # calculate the Transfer Ratios and Efficiencies
 # NB: the summarise() function can be problematic here, if plyr is loaded
@@ -383,6 +406,8 @@ p5 = transfer.dat %>% filter(PhotoID == "P5") %>% select(Mass,TransferTime,Subst
 merge.dat = data.frame(p5[,c("Mass","TransferTime","Substrate","Experiment","Replicate")], p1$Count, p2$Count, p3$Count, p4$Count, p5$Count)
 names(merge.dat) = c("Mass","TransferTime","Substrate","Experiment","Replicate","P1","P2","P3","P4","P5")
 
+all.dat = rbind(all.dat, data.frame(Name = rep("D",nrow(merge.dat)), merge.dat))
+
 # calculate the Transfer Ratios and Efficiencies
 # NB: the summarise() function can be problematic here, if plyr is loaded
 #     after dplyr. Check that first if this stops working.
@@ -473,6 +498,8 @@ p5 = transfer.dat %>% filter(PhotoID == "P5") %>% select(Mass,TransferTime,Subst
 merge.dat = data.frame(p5[,c("Mass","TransferTime","Substrate","Experiment","Replicate")], p1$Count, p2$Count, p3$Count, p4$Count, p5$Count)
 names(merge.dat) = c("Mass","TransferTime","Substrate","Experiment","Replicate","P1","P2","P3","P4","P5")
 
+all.dat = rbind(all.dat, data.frame(Name = rep("E",nrow(merge.dat)), merge.dat))
+
 # calculate the Transfer Ratios and Efficiencies
 # NB: the summarise() function can be problematic here, if plyr is loaded
 #     after dplyr. Check that first if this stops working.
@@ -528,7 +555,20 @@ For the purposes of the paper let's look at the 1000g set for wool and nylon sep
 
 ```{r plotwool}
 
-wool.dat = all.ratio %>% filter(Mass == 1000 & Substrate == "Wool01")
+all.dat$Mass = as.numeric(all.dat$Mass)
+all.dat$TransferTime = as.numeric(all.dat$TransferTime)
+
+
+# calc transfer ratios and efficiencies
+all.ratio.tmp = all.dat %>% group_by(Name, Mass, TransferTime, Experiment, Substrate, Replicate) %>%
+  summarise(Donor = P3 - P1, Receiver = P5 - P2, Donor_post = P3 - P4) %>% mutate(Ratio = Receiver/Donor, Efficiency = Receiver/Donor_post)
+
+# aggregate over replicates
+all.final = all.ratio.tmp %>% 
+  group_by(Name, Mass, TransferTime, Substrate) %>%
+  summarise(N = n(), ratio = mean(Ratio), se = stdErr(Ratio))
+
+wool.dat = all.final %>% filter(Mass == 1000 & Substrate == "Wool01")
 wool.dat
 
 mytheme = theme_minimal() +
@@ -539,9 +579,9 @@ mytheme = theme_minimal() +
         legend.title = element_blank())
 
 
-ggplot(wool.dat, aes(x=numericFactorOrder(TransferTime), y = Ratio, group = Name, colour = Name, shape=Name)) +
+ggplot(wool.dat, aes(x=numericFactorOrder(TransferTime), y = ratio, group = Name, colour = Name, shape=Name)) +
   geom_point(size = 2, position = position_dodge(0.3)) +
-  geom_errorbar(aes(ymin = Ratio-se, ymax = Ratio+se), width = 0.08, position = position_dodge(0.3)) +
+  geom_errorbar(aes(ymin = ratio-se, ymax = ratio+se), width = 0.08, position = position_dodge(0.3)) +
   scale_shape_manual(values = c(0, 1, 2, 5, 6)) +
   labs(title = "Transfer Ratio for Cotton to Wool",
        subtitle = "For 1000g Mass",
@@ -554,12 +594,12 @@ ggsave("fig3.png")
 ```
 ```{r plotnylon}
 
-nylon.dat = all.ratio %>% filter(Mass == 1000 & Substrate == "Nylo01")
+nylon.dat = all.final %>% filter(Mass == 1000 & Substrate == "Nylo01")
 nylon.dat
 
-ggplot(nylon.dat, aes(x=numericFactorOrder(TransferTime), y = Ratio, group = Name, colour = Name, shape=Name)) +
+ggplot(nylon.dat, aes(x=numericFactorOrder(TransferTime), y = ratio, group = Name, colour = Name, shape=Name)) +
   geom_point(size = 2, position = position_dodge(0.3)) +
-  geom_errorbar(aes(ymin = Ratio-se, ymax = Ratio+se), width = 0.08, position = position_dodge(0.3)) +
+  geom_errorbar(aes(ymin = ratio-se, ymax = ratio+se), width = 0.08, position = position_dodge(0.3)) +
   scale_shape_manual(values = c(0, 1, 2, 5, 6)) +
   labs(title = "Transfer Ratio for Cotton to Nylon",
        subtitle = "For 1000g Mass",
@@ -572,12 +612,12 @@ ggsave("fig4.png")
 ```
 ```{r plot60w}
 
-wool60.dat = all.ratio %>% filter(TransferTime == 60 & Substrate == "Wool01")
+wool60.dat = all.final %>% filter(TransferTime == 60 & Substrate == "Wool01")
 wool60.dat
 
-ggplot(wool60.dat, aes(x=numericFactorOrder(Mass), y = Ratio, group = Name, colour = Name, shape=Name)) +
+ggplot(wool60.dat, aes(x=numericFactorOrder(Mass), y = ratio, group = Name, colour = Name, shape=Name)) +
   geom_point(position = position_dodge(0.3)) +
-  geom_errorbar(aes(ymin = Ratio-se, ymax = Ratio+se), width = 0.08, position = position_dodge(0.3)) +
+  geom_errorbar(aes(ymin = ratio-se, ymax = ratio+se), width = 0.08, position = position_dodge(0.3)) +
   scale_shape_manual(values = c(0, 1, 2, 5, 6)) +
   labs(title = "Transfer Ratio for Cotton to Wool",
        subtitle = "For 60s Transfer Time",
@@ -590,12 +630,12 @@ ggsave("fig5.png")
 ```
 ```{r plot60n}
 
-nylon60.dat = all.ratio %>% filter(TransferTime == 60 & Substrate == "Nylo01")
+nylon60.dat = all.final %>% filter(TransferTime == 60 & Substrate == "Nylo01")
 nylon60.dat
 
-ggplot(nylon60.dat, aes(x=numericFactorOrder(Mass), y = Ratio, group = Name, colour = Name, shape=Name)) +
+ggplot(nylon60.dat, aes(x=numericFactorOrder(Mass), y = ratio, group = Name, colour = Name, shape=Name)) +
   geom_point(position = position_dodge(0.3)) +
-  geom_errorbar(aes(ymin = Ratio-se, ymax = Ratio+se), width = 0.08, position = position_dodge(0.3)) +
+  geom_errorbar(aes(ymin = ratio-se, ymax = ratio+se), width = 0.08, position = position_dodge(0.3)) +
   scale_shape_manual(values = c(0, 1, 2, 5, 6)) +
   labs(title = "Transfer Ratio for Cotton to Nylon",
        subtitle = "For 60s Transfer Time",
@@ -610,11 +650,11 @@ ggsave("fig6.png")
 ```{r plotallratio, fig.width=3.5}
 
 # for better labelling add a new mass column with a 'g'
-all.ratio$Massg = paste0(all.ratio$Mass, "g")
+all.final$Massg = paste0(all.final$Mass, "g")
 
-ggplot(all.ratio, aes(x = numericFactorOrder(TransferTime), y = Ratio, group = Name, colour = Name)) + 
+ggplot(all.final, aes(x = numericFactorOrder(TransferTime), y = ratio, group = Name, colour = Name)) + 
   geom_point(size=1, position = position_dodge(0.3)) +
-  geom_errorbar(aes(ymin = Ratio-se, ymax = Ratio+se), width = 0.08, position = position_dodge(0.3)) +
+  geom_errorbar(aes(ymin = ratio-se, ymax = ratio+se), width = 0.08, position = position_dodge(0.3)) +
 #  geom_point(colour = "white", size = 0.7, position = position_dodge(0.2)) +
 #  scale_x_discrete(labels = c("Wool", "Nylon")) +
   labs(title = "Analysis of Transfer Ratio",
