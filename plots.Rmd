@@ -11,6 +11,7 @@ knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 library(readxl)
 library(plyr)
 library(ggplot2)
+library(forcats)
 library(dplyr)
 ```
 
@@ -134,14 +135,34 @@ ggplot(summ.dat, aes(x = Group, y = Ratio)) +
 
 ```
 
+```{r ploteML}
+
+eff.dat = summarySE(final.dat, measurevar = "Efficiency", groupvars = c("Group"))
+
+#eff.dat
+ggplot(eff.dat, aes(x = Group, y = Efficiency)) + 
+  geom_point(size=1) +
+  geom_errorbar(aes(ymin = Efficiency-se, ymax = Efficiency+se), width = 0.08) +
+  geom_point(colour = "white", size = 0.7) +
+  scale_x_discrete(labels = c("Wool", "Nylon")) +
+  labs(title = "Analysis of Transfer Efficiency",
+       x = "",
+       y = "Efficiency") 
+
+```
+
+
 ```{r alldat}
 
 # start df of all ratio data for comparison
-
 all.ratio = summ.dat
 all.ratio = all.ratio[, -1]
 all.ratio = cbind(Name = rep("A", 2), Mass = rep(1000,2), TransferTime = rep(60,2), Substrate = c("Wool01", "Nylo01"), all.ratio)
 
+# do same for efficiency data
+all.eff = eff.dat
+all.eff = all.eff[, -1]
+all.eff = cbind(Name = rep("A", 2), Mass = rep(1000,2), TransferTime = rep(60,2), Substrate = c("Wool01", "Nylo01"), all.eff)
 
 ```
 
@@ -195,11 +216,9 @@ ratio.dat = summarySE(final.dat, measurevar = "Ratio", groupvars = c("Mass", "Tr
 ratio.dat = cbind(Name = rep("B", nrow(ratio.dat)), ratio.dat)
 all.ratio = rbind(all.ratio, ratio.dat)
 
-
-
 knitr::kable(ratio.dat, caption = "Summary Data for ML Transfer Ratios")
 ```
-```{r plotSD}
+```{r plottSD}
 
 ggplot(ratio.dat, aes(x = numericFactorOrder(TransferTime), y = Ratio)) + 
   geom_point(size=2.2) +
@@ -212,6 +231,26 @@ ggplot(ratio.dat, aes(x = numericFactorOrder(TransferTime), y = Ratio)) +
 
 
 ```
+```{r ploteSD}
+
+eff.dat = summarySE(final.dat, measurevar = "Efficiency", groupvars = c("Mass","TransferTime","Substrate"))
+eff.dat = cbind(Name = rep("B", nrow(eff.dat)), eff.dat)
+all.eff = rbind(all.eff, eff.dat)
+knitr::kable(eff.dat, caption = "Efficiency data for SD")
+
+ggplot(eff.dat, aes(x = numericFactorOrder(TransferTime), y = Efficiency)) + 
+  geom_point(size=1) +
+  geom_errorbar(aes(ymin = Efficiency-se, ymax = Efficiency+se), width = 0.08) +
+  geom_point(colour = "white", size = 0.7) +
+#  scale_x_discrete(labels = c("Wool", "Nylon")) +
+  labs(title = "Analysis of Transfer Efficiency",
+       x = "Transfer Time (s)",
+       y = "Efficiency") +
+  facet_grid(numericFactorOrder(Mass) ~ Substrate)
+
+
+```
+Hmm. Getting infinity values for some of the datapoints. To investigate.
 
 ## Read BH Data
 
@@ -282,8 +321,10 @@ ggplot(ratio.dat, aes(x = numericFactorOrder(TransferTime), y = Ratio)) +
 ```{r ploteBH}
 
 eff.dat = summarySE(final.dat, measurevar = "Efficiency", groupvars = c("Mass","TransferTime","Substrate"))
+eff.dat = cbind(Name = rep("C", nrow(eff.dat)), eff.dat)
+all.eff = rbind(all.eff, eff.dat)
+knitr::kable(eff.dat, caption = "Efficiency data for SD")
 
-eff.dat
 ggplot(eff.dat, aes(x = numericFactorOrder(TransferTime), y = Efficiency)) + 
   geom_point(size=1) +
   geom_errorbar(aes(ymin = Efficiency-se, ymax = Efficiency+se), width = 0.08) +
@@ -372,6 +413,9 @@ ggplot(ratio.dat, aes(x = numericFactorOrder(TransferTime), y = Ratio)) +
 ```{r ploteSG}
 
 eff.dat = summarySE(final.dat, measurevar = "Efficiency", groupvars = c("Mass","TransferTime","Substrate"))
+eff.dat = cbind(Name = rep("D", nrow(eff.dat)), eff.dat)
+all.eff = rbind(all.eff, eff.dat)
+knitr::kable(eff.dat, caption = "Efficiency data for SG")
 
 ggplot(eff.dat, aes(x = numericFactorOrder(TransferTime), y = Efficiency)) + 
   geom_point(size=1) +
@@ -461,8 +505,10 @@ ggplot(ratio.dat, aes(x = numericFactorOrder(TransferTime), y = Ratio)) +
 ```{r ploteEM}
 
 eff.dat = summarySE(final.dat, measurevar = "Efficiency", groupvars = c("Mass","TransferTime","Substrate"))
+eff.dat = cbind(Name = rep("E", nrow(eff.dat)), eff.dat)
+all.eff = rbind(all.eff, eff.dat)
+knitr::kable(eff.dat, caption = "Efficiency data for SD")
 
-eff.dat
 ggplot(eff.dat, aes(x = numericFactorOrder(TransferTime), y = Efficiency)) + 
   geom_point(size=1) +
   geom_errorbar(aes(ymin = Efficiency-se, ymax = Efficiency+se), width = 0.08) +
@@ -500,7 +546,7 @@ ggplot(wool.dat, aes(x=numericFactorOrder(TransferTime), y = Ratio, group = Name
   labs(title = "Transfer Ratio for Cotton to Wool",
        subtitle = "For 1000g Mass",
        x = "Transfer Time (s)",
-       y = "Transfer Ratio")
+       y = "Transfer Ratio") +
   mytheme
 
 ggsave("fig3.png")
@@ -563,6 +609,9 @@ ggsave("fig6.png")
 
 ```{r plotallratio, fig.width=3.5}
 
+# for better labelling add a new mass column with a 'g'
+all.ratio$Massg = paste0(all.ratio$Mass, "g")
+
 ggplot(all.ratio, aes(x = numericFactorOrder(TransferTime), y = Ratio, group = Name, colour = Name)) + 
   geom_point(size=1, position = position_dodge(0.3)) +
   geom_errorbar(aes(ymin = Ratio-se, ymax = Ratio+se), width = 0.08, position = position_dodge(0.3)) +
@@ -571,8 +620,46 @@ ggplot(all.ratio, aes(x = numericFactorOrder(TransferTime), y = Ratio, group = N
   labs(title = "Analysis of Transfer Ratio",
        x = "Transfer Time (s)",
        y = "Transfer Ratio") +
-  facet_grid(numericFactorOrder(Mass) ~ Substrate) +
+  facet_grid(fct_reorder(Massg, Mass) ~ Substrate) +
+  mytheme +
+  theme(strip.background = element_rect(fill = "lightblue", colour = "black"))
+
+
+```
+```{r plotenylon}
+
+nylon.eff.dat = all.eff %>% filter(Mass == 1000 & Substrate == "Nylo01")
+nylon.eff.dat
+
+ggplot(nylon.eff.dat, aes(x=numericFactorOrder(TransferTime), y = Efficiency, group = Name, colour = Name, shape=Name)) +
+  geom_point(size = 2, position = position_dodge(0.3)) +
+  geom_errorbar(aes(ymin = Efficiency-se, ymax = Efficiency+se), width = 0.08, position = position_dodge(0.3)) +
+  scale_shape_manual(values = c(0, 1, 2, 5, 6)) +
+  labs(title = "Transfer Ratio for Cotton to Nylon",
+       subtitle = "For 1000g Mass",
+       x = "Transfer Time (s)",
+       y = "Transfer Efficiency") +
   mytheme
+
+ggsave("fig7.png")
+
+```
+
+```{r plotalleff}
+
+all.eff$Massg = paste0(all.eff$Mass, "g")
+
+ggplot(all.eff, aes(x = numericFactorOrder(TransferTime), y = Efficiency, group = Name, colour = Name)) + 
+  geom_point(size=1, position = position_dodge(0.3)) +
+  geom_errorbar(aes(ymin = Efficiency-se, ymax = Efficiency+se), width = 0.08, position = position_dodge(0.3)) +
+#  geom_point(colour = "white", size = 0.7, position = position_dodge(0.2)) +
+#  scale_x_discrete(labels = c("Wool", "Nylon")) +
+  labs(title = "Analysis of Transfer Efficiency",
+       x = "Transfer Time (s)",
+       y = "Transfer Efficiency") +
+  facet_grid(fct_reorder(Massg, Mass) ~ Substrate) +
+  mytheme +
+  theme(strip.background = element_rect(fill = "lightblue", colour = "black"))
 
 
 ```
