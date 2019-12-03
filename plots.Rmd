@@ -145,6 +145,73 @@ all.ratio = cbind(Name = rep("ML", 2), Mass = rep(1000,2), TransferTime = rep(60
 
 ```
 
+## Read SD Data
+
+```{r readSD}
+# Read in SD's data
+my.dat = read_xlsx("dat/20191030DatasetPaper.xlsx", sheet = "DataSd", trim_ws = TRUE)
+
+# only use the transfer experiments for Groups 8-22. Groups 1-7 have no 
+# count data and group 23 is incomplete, only one replicate
+# TODO - deal with Groups 3-6 later
+transfer.dat = my.dat %>% filter(Time == 0 & Group > 8 & Group < 23) %>% select(c("Substrate", "ActivityID", "ObsType", "Count", "Mass", "Duration", "Group", "Repeat")) 
+
+knitr::kable(head(transfer.dat, 20), caption = "'Head' of SD's Transfer Data")
+
+```
+```{r mungeSD}
+
+# fix column types
+transfer.dat$Count = as.numeric(transfer.dat$Count)
+transfer.dat$Duration = as.numeric(transfer.dat$Duration)
+transfer.dat$Mass = as.numeric(transfer.dat$Mass)
+transfer.dat$Group = as.character(transfer.dat$Group)
+transfer.dat$Repeat = as.character(transfer.dat$Repeat)
+
+# rename Denm01 to Deni01 to match others
+transfer.dat[transfer.dat$Substrate == "Denm01", 1] <- "Deni01"
+
+# add a photoID column to keep track of which datapoint is which
+photo.id = rep(paste0("P", seq(1:5)), as.integer(nrow(transfer.dat)/5+1))
+transfer.dat = data.frame(PhotoID = photo.id[1:nrow(transfer.dat)], transfer.dat)
+
+# split out each set of photos...
+p1 = transfer.dat %>% filter(PhotoID == "P1") %>% select(Mass,Duration,Substrate,Group,Repeat,Count)
+p2 = transfer.dat %>% filter(PhotoID == "P2") %>% select(Mass,Duration,Substrate,Group,Repeat,Count)
+p3 = transfer.dat %>% filter(PhotoID == "P3") %>% select(Mass,Duration,Substrate,Group,Repeat,Count)
+p4 = transfer.dat %>% filter(PhotoID == "P4") %>% select(Mass,Duration,Substrate,Group,Repeat,Count)
+p5 = transfer.dat %>% filter(PhotoID == "P5") %>% select(Mass,Duration,Substrate,Group,Repeat,Count)
+
+# ...and merge
+merge.dat = data.frame(p5[,c("Mass","Duration","Substrate","Group","Repeat")], p1$Count, p2$Count, p3$Count, p4$Count, p5$Count)
+names(merge.dat) = c("Mass","TransferTime","Substrate","Group","Repeat","P1","P2","P3","P4","P5")
+
+# calculate the Transfer Ratios and Efficiencies
+# NB: the summarise() function can be problematic here, if plyr is loaded
+#     after dplyr. Check that first if this stops working.
+final.dat = merge.dat %>% group_by(Mass, TransferTime, Substrate, Repeat) %>% summarise(Donor = P3 - P1, Receiver = P5 - P2, Donor_post = P3 - P4) %>% mutate(Ratio = Receiver/Donor, Efficiency = Receiver/Donor_post)
+
+ratio.dat = summarySE(final.dat, measurevar = "Ratio", groupvars = c("Mass", "TransferTime", "Substrate"))
+ratio.dat = cbind(Name = rep("SD", nrow(ratio.dat)), ratio.dat)
+all.ratio = rbind(all.ratio, ratio.dat)
+
+
+
+knitr::kable(ratio.dat, caption = "Summary Data for ML Transfer Ratios")
+```
+```{r plotSD}
+
+ggplot(ratio.dat, aes(x = numericFactorOrder(TransferTime), y = Ratio)) + 
+  geom_point(size=2.2) +
+  geom_errorbar(aes(ymin = Ratio-se, ymax = Ratio+se), width = 0.08) +
+  geom_point(colour = "white") +
+  labs(title = "Analysis of Transfer Ratios",
+       x = "Receiver Material",
+       y = "Transfer Ratio") +
+  facet_grid(numericFactorOrder(Mass) ~ Substrate)
+
+
+```
 
 ## Read BH Data
 
