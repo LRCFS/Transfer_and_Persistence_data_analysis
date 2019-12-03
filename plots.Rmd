@@ -478,6 +478,61 @@ ggplot(eff.dat, aes(x = numericFactorOrder(TransferTime), y = Efficiency)) +
 
 ## Combined Analysis
 
+For the purposes of the paper let's look at the 1000g set for wool and nylon separately.
+
+```{r plotwool}
+
+wool.dat = all.ratio %>% filter(Mass == 1000 & Substrate == "Wool01")
+wool.dat
+
+ggplot(wool.dat, aes(x=numericFactorOrder(TransferTime), y = Ratio, group = Name, colour = Name, shape=Name)) +
+  geom_point(position = position_dodge(0.3)) +
+  geom_errorbar(aes(ymin = Ratio-se, ymax = Ratio+se), width = 0.08, position = position_dodge(0.3)) +
+  labs(title = "Transfer Ratio for Cotton to Wool",
+       subtitle = "For 1000g Mass",
+       x = "Transfer Time (s)")
+
+```
+```{r plotnylon}
+
+nylon.dat = all.ratio %>% filter(Mass == 1000 & Substrate == "Nylo01")
+nylon.dat
+
+ggplot(nylon.dat, aes(x=numericFactorOrder(TransferTime), y = Ratio, group = Name, colour = Name, shape=Name)) +
+  geom_point(position = position_dodge(0.3)) +
+  geom_errorbar(aes(ymin = Ratio-se, ymax = Ratio+se), width = 0.08, position = position_dodge(0.3)) +
+  labs(title = "Transfer Ratio for Cotton to Nylon",
+       subtitle = "For 1000g Mass",
+       x = "Transfer Time (s)")
+
+```
+```{r plot60w}
+
+wool60.dat = all.ratio %>% filter(TransferTime == 60 & Substrate == "Wool01")
+wool60.dat
+
+ggplot(wool60.dat, aes(x=numericFactorOrder(Mass), y = Ratio, group = Name, colour = Name, shape=Name)) +
+  geom_point(position = position_dodge(0.3)) +
+  geom_errorbar(aes(ymin = Ratio-se, ymax = Ratio+se), width = 0.08, position = position_dodge(0.3)) +
+  labs(title = "Transfer Ratio for Cotton to Wool",
+       subtitle = "For 60s Transfer Time",
+       x = "Mass (g)")
+
+```
+```{r plot60n}
+
+nylon60.dat = all.ratio %>% filter(TransferTime == 60 & Substrate == "Nylo01")
+nylon60.dat
+
+ggplot(nylon60.dat, aes(x=numericFactorOrder(Mass), y = Ratio, group = Name, colour = Name, shape=Name)) +
+  geom_point(position = position_dodge(0.3)) +
+  geom_errorbar(aes(ymin = Ratio-se, ymax = Ratio+se), width = 0.08, position = position_dodge(0.3)) +
+  labs(title = "Transfer Ratio for Cotton to Nylon",
+       subtitle = "For 60s Transfer Time",
+       x = "Mass (g)")
+
+```
+
 ```{r plotallratio}
 
 ggplot(all.ratio, aes(x = numericFactorOrder(TransferTime), y = Ratio, group = Name, colour = Name)) + 
