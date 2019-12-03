@@ -140,7 +140,7 @@ ggplot(summ.dat, aes(x = Group, y = Ratio)) +
 
 all.ratio = summ.dat
 all.ratio = all.ratio[, -1]
-all.ratio = cbind(Name = rep("ML", 2), Mass = rep(1000,2), TransferTime = rep(60,2), Substrate = c("Wool01", "Nylo01"), all.ratio)
+all.ratio = cbind(Name = rep("A", 2), Mass = rep(1000,2), TransferTime = rep(60,2), Substrate = c("Wool01", "Nylo01"), all.ratio)
 
 
 ```
@@ -192,7 +192,7 @@ names(merge.dat) = c("Mass","TransferTime","Substrate","Group","Repeat","P1","P2
 final.dat = merge.dat %>% group_by(Mass, TransferTime, Substrate, Repeat) %>% summarise(Donor = P3 - P1, Receiver = P5 - P2, Donor_post = P3 - P4) %>% mutate(Ratio = Receiver/Donor, Efficiency = Receiver/Donor_post)
 
 ratio.dat = summarySE(final.dat, measurevar = "Ratio", groupvars = c("Mass", "TransferTime", "Substrate"))
-ratio.dat = cbind(Name = rep("SD", nrow(ratio.dat)), ratio.dat)
+ratio.dat = cbind(Name = rep("B", nrow(ratio.dat)), ratio.dat)
 all.ratio = rbind(all.ratio, ratio.dat)
 
 
@@ -260,7 +260,7 @@ names(merge.dat) = c("Mass","TransferTime","Substrate","Experiment","Replicate",
 final.dat = merge.dat %>% group_by(Mass, TransferTime, Substrate, Replicate) %>% summarise(Donor = P3 - P1, Receiver = P5 - P2, Donor_post = P3 - P4) %>% mutate(Ratio = Receiver/Donor, Efficiency = Receiver/Donor_post)
 
 ratio.dat = summarySE(final.dat, measurevar = "Ratio", groupvars = c("Mass","TransferTime","Substrate"))
-ratio.dat = cbind(Name = rep("BH", nrow(ratio.dat)), ratio.dat)
+ratio.dat = cbind(Name = rep("C", nrow(ratio.dat)), ratio.dat)
 all.ratio = rbind(all.ratio, ratio.dat)
 
 knitr::kable(ratio.dat, caption = "Summary Data for BH Transfer Ratios")
@@ -348,7 +348,7 @@ names(merge.dat) = c("Mass","TransferTime","Substrate","Experiment","Replicate",
 final.dat = merge.dat %>% group_by(Mass, TransferTime, Substrate, Replicate) %>% summarise(Donor = P3 - P1, Receiver = P5 - P2, Donor_post = P3 - P4) %>% mutate(Ratio = Receiver/Donor, Efficiency = Receiver/Donor_post)
 
 ratio.dat = summarySE(final.dat, measurevar = "Ratio", groupvars = c("Mass","TransferTime","Substrate"))
-ratio.dat = cbind(Name = rep("SG", nrow(ratio.dat)), ratio.dat)
+ratio.dat = cbind(Name = rep("D", nrow(ratio.dat)), ratio.dat)
 all.ratio = rbind(all.ratio, ratio.dat)
 
 knitr::kable(ratio.dat, caption = "Summary Data for SG Transfer Ratios")
@@ -435,7 +435,7 @@ names(merge.dat) = c("Mass","TransferTime","Substrate","Experiment","Replicate",
 final.dat = merge.dat %>% group_by(Mass, TransferTime, Experiment, Substrate, Replicate) %>% summarise(Donor = P3 - P1, Receiver = P5 - P2, Donor_post = P3 - P4) %>% mutate(Ratio = Receiver/Donor, Efficiency = Receiver/Donor_post)
 
 ratio.dat = summarySE(final.dat, measurevar = "Ratio", groupvars = c("Mass","TransferTime","Substrate"))
-ratio.dat = cbind(Name = rep("EM", nrow(ratio.dat)), ratio.dat)
+ratio.dat = cbind(Name = rep("E", nrow(ratio.dat)), ratio.dat)
 all.ratio = rbind(all.ratio, ratio.dat)
 
 
@@ -485,12 +485,25 @@ For the purposes of the paper let's look at the 1000g set for wool and nylon sep
 wool.dat = all.ratio %>% filter(Mass == 1000 & Substrate == "Wool01")
 wool.dat
 
+mytheme = theme_minimal() +
+  theme(panel.grid.minor = element_blank(),
+        panel.grid.major.x = element_blank(),
+        axis.title = element_text(size = 13, face = "bold"),
+        axis.text = element_text(size = 11),
+        legend.title = element_blank())
+
+
 ggplot(wool.dat, aes(x=numericFactorOrder(TransferTime), y = Ratio, group = Name, colour = Name, shape=Name)) +
-  geom_point(position = position_dodge(0.3)) +
+  geom_point(size = 2, position = position_dodge(0.3)) +
   geom_errorbar(aes(ymin = Ratio-se, ymax = Ratio+se), width = 0.08, position = position_dodge(0.3)) +
+  scale_shape_manual(values = c(0, 1, 2, 5, 6)) +
   labs(title = "Transfer Ratio for Cotton to Wool",
        subtitle = "For 1000g Mass",
-       x = "Transfer Time (s)")
+       x = "Transfer Time (s)",
+       y = "Transfer Ratio")
+  mytheme
+
+ggsave("fig3.png")
 
 ```
 ```{r plotnylon}
@@ -499,11 +512,16 @@ nylon.dat = all.ratio %>% filter(Mass == 1000 & Substrate == "Nylo01")
 nylon.dat
 
 ggplot(nylon.dat, aes(x=numericFactorOrder(TransferTime), y = Ratio, group = Name, colour = Name, shape=Name)) +
-  geom_point(position = position_dodge(0.3)) +
+  geom_point(size = 2, position = position_dodge(0.3)) +
   geom_errorbar(aes(ymin = Ratio-se, ymax = Ratio+se), width = 0.08, position = position_dodge(0.3)) +
+  scale_shape_manual(values = c(0, 1, 2, 5, 6)) +
   labs(title = "Transfer Ratio for Cotton to Nylon",
        subtitle = "For 1000g Mass",
-       x = "Transfer Time (s)")
+       x = "Transfer Time (s)",
+       y = "Transfer Ratio") +
+  mytheme
+
+ggsave("fig4.png")
 
 ```
 ```{r plot60w}
@@ -514,9 +532,14 @@ wool60.dat
 ggplot(wool60.dat, aes(x=numericFactorOrder(Mass), y = Ratio, group = Name, colour = Name, shape=Name)) +
   geom_point(position = position_dodge(0.3)) +
   geom_errorbar(aes(ymin = Ratio-se, ymax = Ratio+se), width = 0.08, position = position_dodge(0.3)) +
+  scale_shape_manual(values = c(0, 1, 2, 5, 6)) +
   labs(title = "Transfer Ratio for Cotton to Wool",
        subtitle = "For 60s Transfer Time",
-       x = "Mass (g)")
+       x = "Mass (g)",
+       y = "Transfer Ratio") +
+  mytheme
+
+ggsave("fig5.png")
 
 ```
 ```{r plot60n}
@@ -527,23 +550,29 @@ nylon60.dat
 ggplot(nylon60.dat, aes(x=numericFactorOrder(Mass), y = Ratio, group = Name, colour = Name, shape=Name)) +
   geom_point(position = position_dodge(0.3)) +
   geom_errorbar(aes(ymin = Ratio-se, ymax = Ratio+se), width = 0.08, position = position_dodge(0.3)) +
+  scale_shape_manual(values = c(0, 1, 2, 5, 6)) +
   labs(title = "Transfer Ratio for Cotton to Nylon",
        subtitle = "For 60s Transfer Time",
-       x = "Mass (g)")
+       x = "Mass (g)",
+       y = "Transfer Ratio") +
+  mytheme
+
+ggsave("fig6.png")
 
 ```
 
-```{r plotallratio}
+```{r plotallratio, fig.width=3.5}
 
 ggplot(all.ratio, aes(x = numericFactorOrder(TransferTime), y = Ratio, group = Name, colour = Name)) + 
-  geom_point(size=1, position = position_dodge(0.2)) +
-  geom_errorbar(aes(ymin = Ratio-se, ymax = Ratio+se), width = 0.08, position = position_dodge(0.2)) +
+  geom_point(size=1, position = position_dodge(0.3)) +
+  geom_errorbar(aes(ymin = Ratio-se, ymax = Ratio+se), width = 0.08, position = position_dodge(0.3)) +
 #  geom_point(colour = "white", size = 0.7, position = position_dodge(0.2)) +
 #  scale_x_discrete(labels = c("Wool", "Nylon")) +
   labs(title = "Analysis of Transfer Ratio",
        x = "Transfer Time (s)",
        y = "Transfer Ratio") +
-  facet_grid(numericFactorOrder(Mass) ~ Substrate)
+  facet_grid(numericFactorOrder(Mass) ~ Substrate) +
+  mytheme
 
 
 ```
