@@ -647,6 +647,24 @@ ggsave("fig6.png")
 
 ```
 
+Seeing as there's very little effect from mass or time let's combine and see if receiver material has an effect.
+
+```{r}
+
+# plot boxplots
+ggplot(all.ratio.tmp %>% 
+  filter(Substrate != "Deni01"), aes(x=Name, y=Ratio, fill = Substrate)) +
+  geom_boxplot() +
+  labs(title = "Transfer Ratio by Experiment and Substrate",
+       x = "Experiment",
+       y = "Transfer Ratio") +
+  mytheme
+
+ggsave("fig8.png")
+#kruskal.test(Ratio ~ Substrate, data = all.ratio.tmp)
+```
+
+
 ```{r plotallratio, fig.width=3.5}
 
 # for better labelling add a new mass column with a 'g'
