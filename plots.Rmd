@@ -6,7 +6,7 @@ output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
 # libraries
 library(readxl)
 library(plyr)
@@ -133,8 +133,11 @@ all.dat = cbind(Name = rep("A",nrow(merge.dat)), merge.dat)
 final.dat = merge.dat %>% group_by(Mass, TransferTime, Experiment, Replicate) %>% summarise(Donor = P3 - P1, Receiver = P5 - P2, Donor_post = P3 - P4) %>% mutate(Ratio = Receiver/Donor, Efficiency = Receiver/Donor_post)
 
 summ.dat = summarySE(final.dat, measurevar = "Ratio", groupvars = c("Experiment"))
+ratio.dat = summ.dat[, -1]
+ratio.dat = cbind(Mass = rep(1000,2), TransferTime = rep(60,2), Substrate = c("Wool01", "Nylo01"), ratio.dat)
 
-knitr::kable(summ.dat, caption = "Summary Data for ML Transfer Ratios")
+
+knitr::kable(ratio.dat, caption = "Summary Data for ML Transfer Ratios")
 ```
 
 ```{r plotML}
@@ -167,7 +170,7 @@ ggplot(eff.dat, aes(x = Experiment, y = Efficiency)) +
 ```
 
 
-```{r alldat}
+```{r alldat, eval=FALSE}
 
 # start df of all ratio data for comparison
 all.ratio = summ.dat
@@ -234,8 +237,6 @@ all.dat = rbind(all.dat, data.frame(Name = rep("B",nrow(merge.dat)), merge.dat))
 final.dat = merge.dat %>% group_by(Mass, TransferTime, Substrate, Replicate) %>% summarise(Donor = P3 - P1, Receiver = P5 - P2, Donor_post = P3 - P4) %>% mutate(Ratio = Receiver/Donor, Efficiency = Receiver/Donor_post)
 
 ratio.dat = summarySE(final.dat, measurevar = "Ratio", groupvars = c("Mass", "TransferTime", "Substrate"))
-ratio.dat = cbind(Name = rep("B", nrow(ratio.dat)), ratio.dat)
-all.ratio = rbind(all.ratio, ratio.dat)
 
 knitr::kable(ratio.dat, caption = "Summary Data for ML Transfer Ratios")
 ```
@@ -255,8 +256,6 @@ ggplot(ratio.dat, aes(x = numericFactorOrder(TransferTime), y = Ratio)) +
 ```{r ploteSD}
 
 eff.dat = summarySE(final.dat, measurevar = "Efficiency", groupvars = c("Mass","TransferTime","Substrate"))
-eff.dat = cbind(Name = rep("B", nrow(eff.dat)), eff.dat)
-all.eff = rbind(all.eff, eff.dat)
 knitr::kable(eff.dat, caption = "Efficiency data for SD")
 
 ggplot(eff.dat, aes(x = numericFactorOrder(TransferTime), y = Efficiency)) + 
@@ -322,8 +321,6 @@ all.dat = rbind(all.dat, data.frame(Name = rep("C",nrow(merge.dat)), merge.dat))
 final.dat = merge.dat %>% group_by(Mass, TransferTime, Substrate, Replicate) %>% summarise(Donor = P3 - P1, Receiver = P5 - P2, Donor_post = P3 - P4) %>% mutate(Ratio = Receiver/Donor, Efficiency = Receiver/Donor_post)
 
 ratio.dat = summarySE(final.dat, measurevar = "Ratio", groupvars = c("Mass","TransferTime","Substrate"))
-ratio.dat = cbind(Name = rep("C", nrow(ratio.dat)), ratio.dat)
-all.ratio = rbind(all.ratio, ratio.dat)
 
 knitr::kable(ratio.dat, caption = "Summary Data for BH Transfer Ratios")
 ```
@@ -344,8 +341,7 @@ ggplot(ratio.dat, aes(x = numericFactorOrder(TransferTime), y = Ratio)) +
 ```{r ploteBH}
 
 eff.dat = summarySE(final.dat, measurevar = "Efficiency", groupvars = c("Mass","TransferTime","Substrate"))
-eff.dat = cbind(Name = rep("C", nrow(eff.dat)), eff.dat)
-all.eff = rbind(all.eff, eff.dat)
+
 knitr::kable(eff.dat, caption = "Efficiency data for SD")
 
 ggplot(eff.dat, aes(x = numericFactorOrder(TransferTime), y = Efficiency)) + 
@@ -414,8 +410,6 @@ all.dat = rbind(all.dat, data.frame(Name = rep("D",nrow(merge.dat)), merge.dat))
 final.dat = merge.dat %>% group_by(Mass, TransferTime, Substrate, Replicate) %>% summarise(Donor = P3 - P1, Receiver = P5 - P2, Donor_post = P3 - P4) %>% mutate(Ratio = Receiver/Donor, Efficiency = Receiver/Donor_post)
 
 ratio.dat = summarySE(final.dat, measurevar = "Ratio", groupvars = c("Mass","TransferTime","Substrate"))
-ratio.dat = cbind(Name = rep("D", nrow(ratio.dat)), ratio.dat)
-all.ratio = rbind(all.ratio, ratio.dat)
 
 knitr::kable(ratio.dat, caption = "Summary Data for SG Transfer Ratios")
 ```
@@ -439,7 +433,7 @@ ggplot(ratio.dat, aes(x = numericFactorOrder(TransferTime), y = Ratio)) +
 
 eff.dat = summarySE(final.dat, measurevar = "Efficiency", groupvars = c("Mass","TransferTime","Substrate"))
 eff.dat = cbind(Name = rep("D", nrow(eff.dat)), eff.dat)
-all.eff = rbind(all.eff, eff.dat)
+
 knitr::kable(eff.dat, caption = "Efficiency data for SG")
 
 ggplot(eff.dat, aes(x = numericFactorOrder(TransferTime), y = Efficiency)) + 
@@ -505,10 +499,7 @@ all.dat = rbind(all.dat, data.frame(Name = rep("E",nrow(merge.dat)), merge.dat))
 #     after dplyr. Check that first if this stops working.
 final.dat = merge.dat %>% group_by(Mass, TransferTime, Experiment, Substrate, Replicate) %>% summarise(Donor = P3 - P1, Receiver = P5 - P2, Donor_post = P3 - P4) %>% mutate(Ratio = Receiver/Donor, Efficiency = Receiver/Donor_post)
 
-ratio.dat = summarySE(final.dat, measurevar = "Ratio", groupvars = c("Mass","TransferTime","Substrate"))
-ratio.dat = cbind(Name = rep("E", nrow(ratio.dat)), ratio.dat)
-all.ratio = rbind(all.ratio, ratio.dat)
-
+ratio.dat = summarySE(final.dat, measurevar = "Ratio", groupvars = c("Mass","TransferTime","Substrate", "Experiment"))
 
 knitr::kable(ratio.dat, caption = "Summary Data for EM Transfer Ratios")
 ```
@@ -532,8 +523,7 @@ ggplot(ratio.dat, aes(x = numericFactorOrder(TransferTime), y = Ratio)) +
 ```{r ploteEM}
 
 eff.dat = summarySE(final.dat, measurevar = "Efficiency", groupvars = c("Mass","TransferTime","Substrate"))
-eff.dat = cbind(Name = rep("E", nrow(eff.dat)), eff.dat)
-all.eff = rbind(all.eff, eff.dat)
+
 knitr::kable(eff.dat, caption = "Efficiency data for SD")
 
 ggplot(eff.dat, aes(x = numericFactorOrder(TransferTime), y = Efficiency)) + 
@@ -560,16 +550,16 @@ all.dat$TransferTime = as.numeric(all.dat$TransferTime)
 
 
 # calc transfer ratios and efficiencies
-all.ratio.tmp = all.dat %>% group_by(Name, Mass, TransferTime, Experiment, Substrate, Replicate) %>%
+all.final = all.dat %>% group_by(Name, Mass, TransferTime, Experiment, Substrate, Replicate) %>%
   summarise(Donor = P3 - P1, Receiver = P5 - P2, Donor_post = P3 - P4) %>% mutate(Ratio = Receiver/Donor, Efficiency = Receiver/Donor_post)
 
 # aggregate over replicates
-all.final = all.ratio.tmp %>% 
+all.ratio = all.final %>% 
   group_by(Name, Mass, TransferTime, Substrate) %>%
   summarise(N = n(), ratio = mean(Ratio), se = stdErr(Ratio))
 
-wool.dat = all.final %>% filter(Mass == 1000 & Substrate == "Wool01")
-wool.dat
+wool.dat = all.ratio %>% filter(Mass == 1000 & Substrate == "Wool01")
+#wool.dat
 
 mytheme = theme_minimal() +
   theme(panel.grid.minor = element_blank(),
@@ -594,8 +584,8 @@ ggsave("fig3.png")
 ```
 ```{r plotnylon}
 
-nylon.dat = all.final %>% filter(Mass == 1000 & Substrate == "Nylo01")
-nylon.dat
+nylon.dat = all.ratio %>% filter(Mass == 1000 & Substrate == "Nylo01")
+#nylon.dat
 
 ggplot(nylon.dat, aes(x=numericFactorOrder(TransferTime), y = ratio, group = Name, colour = Name, shape=Name)) +
   geom_point(size = 2, position = position_dodge(0.3)) +
@@ -612,8 +602,8 @@ ggsave("fig4.png")
 ```
 ```{r plot60w}
 
-wool60.dat = all.final %>% filter(TransferTime == 60 & Substrate == "Wool01")
-wool60.dat
+wool60.dat = all.ratio %>% filter(TransferTime == 60 & Substrate == "Wool01")
+#wool60.dat
 
 ggplot(wool60.dat, aes(x=numericFactorOrder(Mass), y = ratio, group = Name, colour = Name, shape=Name)) +
   geom_point(position = position_dodge(0.3)) +
@@ -630,8 +620,8 @@ ggsave("fig5.png")
 ```
 ```{r plot60n}
 
-nylon60.dat = all.final %>% filter(TransferTime == 60 & Substrate == "Nylo01")
-nylon60.dat
+nylon60.dat = all.ratio %>% filter(TransferTime == 60 & Substrate == "Nylo01")
+#nylon60.dat
 
 ggplot(nylon60.dat, aes(x=numericFactorOrder(Mass), y = ratio, group = Name, colour = Name, shape=Name)) +
   geom_point(position = position_dodge(0.3)) +
@@ -652,25 +642,38 @@ Seeing as there's very little effect from mass or time let's combine and see if 
 ```{r}
 
 # plot boxplots
-ggplot(all.ratio.tmp %>% 
-  filter(Substrate != "Deni01"), aes(x=Name, y=Ratio, fill = Substrate)) +
+ggplot(all.ratio %>% 
+  filter(Substrate != "Deni01"), aes(x=Name, y=ratio, fill = Substrate)) +
   geom_boxplot() +
   labs(title = "Transfer Ratio by Experiment and Substrate",
        x = "Experiment",
        y = "Transfer Ratio") +
   mytheme
 
-ggsave("fig8.png")
+ggsave("fig7.png")
 #kruskal.test(Ratio ~ Substrate, data = all.ratio.tmp)
 ```
 
+What does the count data look like for a given photo?
 
-```{r plotallratio, fig.width=3.5}
+```{r}
+
+ggplot(all.dat, aes(x=P3)) + geom_density() +
+  labs(title = "Distribution of Particle Counts",
+       substitle = "Photo 3",
+       x = "") +
+  facet_grid(Name ~ ., scales = "free_y")
+
+```
+
+
+
+```{r plotallratio}
 
 # for better labelling add a new mass column with a 'g'
-all.final$Massg = paste0(all.final$Mass, "g")
+all.ratio$Massg = paste0(all.ratio$Mass, "g")
 
-ggplot(all.final, aes(x = numericFactorOrder(TransferTime), y = ratio, group = Name, colour = Name)) + 
+ggplot(all.ratio, aes(x = numericFactorOrder(TransferTime), y = ratio, group = Name, colour = Name)) + 
   geom_point(size=1, position = position_dodge(0.3)) +
   geom_errorbar(aes(ymin = ratio-se, ymax = ratio+se), width = 0.08, position = position_dodge(0.3)) +
 #  geom_point(colour = "white", size = 0.7, position = position_dodge(0.2)) +
@@ -684,32 +687,63 @@ ggplot(all.final, aes(x = numericFactorOrder(TransferTime), y = ratio, group = N
 
 
 ```
+
+### Transfer Efficiencies
+
+A quick look at comparative transfer efficiency data.
+
 ```{r plotenylon}
 
-nylon.eff.dat = all.eff %>% filter(Mass == 1000 & Substrate == "Nylo01")
-nylon.eff.dat
+# first calc the efficiency data
+all.eff = all.final %>% 
+  group_by(Name, Mass, TransferTime, Substrate) %>%
+  summarise(N = n(), efficiency = mean(Efficiency), se = stdErr(Efficiency))
 
-ggplot(nylon.eff.dat, aes(x=numericFactorOrder(TransferTime), y = Efficiency, group = Name, colour = Name, shape=Name)) +
+
+nylon.eff.dat = all.eff %>% filter(Mass == 1000 & Substrate == "Nylo01")
+#nylon.eff.dat
+
+ggplot(nylon.eff.dat, aes(x=numericFactorOrder(TransferTime), y = efficiency, group = Name, colour = Name, shape=Name)) +
   geom_point(size = 2, position = position_dodge(0.3)) +
-  geom_errorbar(aes(ymin = Efficiency-se, ymax = Efficiency+se), width = 0.08, position = position_dodge(0.3)) +
+  geom_errorbar(aes(ymin = efficiency-se, ymax = efficiency+se), width = 0.08, position = position_dodge(0.3)) +
   scale_shape_manual(values = c(0, 1, 2, 5, 6)) +
-  labs(title = "Transfer Ratio for Cotton to Nylon",
+  labs(title = "Transfer Efficiency for Cotton to Nylon",
        subtitle = "For 1000g Mass",
        x = "Transfer Time (s)",
        y = "Transfer Efficiency") +
   mytheme
 
-ggsave("fig7.png")
+ggsave("fig8.png")
 
 ```
+
+Not sure what the transfer efficiency is showing here? What do values >1 mean, greater than 100% efficiency or what?
+
+```{r plotewool}
+
+wool.eff.dat = all.eff %>% filter(Mass == 1000 & Substrate == "Wool01")
+#nylon.eff.dat
+
+ggplot(wool.eff.dat, aes(x=numericFactorOrder(TransferTime), y = efficiency, group = Name, colour = Name, shape=Name)) +
+  geom_point(size = 2, position = position_dodge(0.3)) +
+  geom_errorbar(aes(ymin = efficiency-se, ymax = efficiency+se), width = 0.08, position = position_dodge(0.3)) +
+  scale_shape_manual(values = c(0, 1, 2, 5, 6)) +
+  labs(title = "Transfer Efficiency for Cotton to Wool",
+       subtitle = "For 1000g Mass",
+       x = "Transfer Time (s)",
+       y = "Transfer Efficiency") +
+  mytheme
+
+```
+
 
 ```{r plotalleff}
 
 all.eff$Massg = paste0(all.eff$Mass, "g")
 
-ggplot(all.eff, aes(x = numericFactorOrder(TransferTime), y = Efficiency, group = Name, colour = Name)) + 
+ggplot(all.eff, aes(x = numericFactorOrder(TransferTime), y = efficiency, group = Name, colour = Name)) + 
   geom_point(size=1, position = position_dodge(0.3)) +
-  geom_errorbar(aes(ymin = Efficiency-se, ymax = Efficiency+se), width = 0.08, position = position_dodge(0.3)) +
+  geom_errorbar(aes(ymin = efficiency-se, ymax = efficiency+se), width = 0.08, position = position_dodge(0.3)) +
 #  geom_point(colour = "white", size = 0.7, position = position_dodge(0.2)) +
 #  scale_x_discrete(labels = c("Wool", "Nylon")) +
   labs(title = "Analysis of Transfer Efficiency",
