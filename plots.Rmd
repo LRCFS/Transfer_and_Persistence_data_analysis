@@ -451,6 +451,14 @@ ggplot(eff.dat, aes(x = numericFactorOrder(TransferTime), y = Efficiency)) +
 
 ## EM Data
 
+This data is a little different from the others as this study includes an 
+analysis of camera settings - specified in the "Note" column as C1 or C2.
+That information is included in the analysis and the two camera settings
+reported separately.
+
+In the comparison to the other datasets only the C1 camera data is used,
+for pragmatic reasons.
+
 ```{r readEm}
 # Read in Em's data
 my.dat = read_xlsx("dat/StrEmCleanDataset.xlsx", sheet = "DataEm", trim_ws = TRUE, col_types = "text")
@@ -462,7 +470,7 @@ my.dat = rename(my.dat, PersistenceTime = `PersistenceTime (min)`)
 #colnames(my.dat)
 
 # only use the Transfer data (PersistenceTime == "0") 
-transfer.dat = my.dat %>% filter(PersistenceTime == 0) %>% select(c("Substrate", "ObservationType", "Count", "Mass", "TransferTime", "Experiment", "Replicate"))
+transfer.dat = my.dat %>% filter(PersistenceTime == 0) %>% select(c("Substrate", "ObservationType", "Count", "Mass", "TransferTime", "Experiment", "Replicate", "Note"))
 
 # also remove expt 16 as it is incomplete
 transfer.dat = transfer.dat[as.numeric(transfer.dat$Experiment) < 16,]
@@ -482,24 +490,31 @@ photo.id = rep(paste0("P", seq(1:5)), as.integer(nrow(transfer.dat)/5+1))
 transfer.dat = data.frame(PhotoID = photo.id[1:nrow(transfer.dat)], transfer.dat)
 
 # split out each set of photos...
-p1 = transfer.dat %>% filter(PhotoID == "P1") %>% select(Mass,TransferTime,Substrate,Experiment,Replicate,Count)
-p2 = transfer.dat %>% filter(PhotoID == "P2") %>% select(Mass,TransferTime,Substrate,Experiment,Replicate,Count)
-p3 = transfer.dat %>% filter(PhotoID == "P3") %>% select(Mass,TransferTime,Substrate,Experiment,Replicate,Count)
-p4 = transfer.dat %>% filter(PhotoID == "P4") %>% select(Mass,TransferTime,Substrate,Experiment,Replicate,Count)
-p5 = transfer.dat %>% filter(PhotoID == "P5") %>% select(Mass,TransferTime,Substrate,Experiment,Replicate,Count)
+p1 = transfer.dat %>% filter(PhotoID == "P1") %>% select(Mass,TransferTime,Substrate,Experiment,Replicate,Note,Count)
+p2 = transfer.dat %>% filter(PhotoID == "P2") %>% select(Mass,TransferTime,Substrate,Experiment,Replicate,Note,Count)
+p3 = transfer.dat %>% filter(PhotoID == "P3") %>% select(Mass,TransferTime,Substrate,Experiment,Replicate,Note,Count)
+p4 = transfer.dat %>% filter(PhotoID == "P4") %>% select(Mass,TransferTime,Substrate,Experiment,Replicate,Note,Count)
+p5 = transfer.dat %>% filter(PhotoID == "P5") %>% select(Mass,TransferTime,Substrate,Experiment,Replicate,Note,Count)
 
 # ...and merge
-merge.dat = data.frame(p5[,c("Mass","TransferTime","Substrate","Experiment","Replicate")], p1$Count, p2$Count, p3$Count, p4$Count, p5$Count)
-names(merge.dat) = c("Mass","TransferTime","Substrate","Experiment","Replicate","P1","P2","P3","P4","P5")
+merge.dat = data.frame(p5[,c("Mass","TransferTime","Substrate","Experiment","Replicate", "Note")], p1$Count, p2$Count, p3$Count, p4$Count, p5$Count)
+names(merge.dat) = c("Mass","TransferTime","Substrate","Experiment","Replicate", "Note","P1","P2","P3","P4","P5")
 
-all.dat = rbind(all.dat, data.frame(Name = rep("E",nrow(merge.dat)), merge.dat))
+# this is a little more complicated as need select only C1
+# data and then remove the note column before combining
+# with the other datasets
+em.dat = merge.dat[merge.dat$Note == 'C1',]
+em.dat = em.dat[, -6]
+all.dat = rbind(all.dat, data.frame(Name = rep("E",nrow(em.dat)), em.dat))
 
 # calculate the Transfer Ratios and Efficiencies
 # NB: the summarise() function can be problematic here, if plyr is loaded
 #     after dplyr. Check that first if this stops working.
-final.dat = merge.dat %>% group_by(Mass, TransferTime, Experiment, Substrate, Replicate) %>% summarise(Donor = P3 - P1, Receiver = P5 - P2, Donor_post = P3 - P4) %>% mutate(Ratio = Receiver/Donor, Efficiency = Receiver/Donor_post)
+final.dat = merge.dat %>% group_by(Mass, TransferTime, Experiment, Substrate, Replicate, Note) %>% summarise(Donor = P3 - P1, Receiver = P5 - P2, Donor_post = P3 - P4) %>% mutate(Ratio = Receiver/Donor, Efficiency = Receiver/Donor_post)
 
-ratio.dat = summarySE(final.dat, measurevar = "Ratio", groupvars = c("Mass","TransferTime","Substrate", "Experiment"))
+ratio.dat = summarySE(final.dat, measurevar = "Ratio", groupvars = c("Mass","TransferTime","Substrate", "Experiment", "Note"))
+# remove experimental conditions with < 2 replicates.
+ratio.dat = ratio.dat[ratio.dat$N > 1,]
 
 knitr::kable(ratio.dat, caption = "Summary Data for EM Transfer Ratios")
 ```
@@ -508,12 +523,22 @@ Added an extra column for "Experiment" in addition to "Substrate" here as there 
 
 ```{r plottEM}
 
-ggplot(ratio.dat, aes(x = numericFactorOrder(TransferTime), y = Ratio)) + 
+ggplot(ratio.dat[ratio.dat$Note == 'C1',], aes(x = numericFactorOrder(TransferTime), y = Ratio)) + 
   geom_point(size=1) +
   geom_errorbar(aes(ymin = Ratio-se, ymax = Ratio+se), width = 0.08) +
   geom_point(colour = "white", size = 0.7) +
 #  scale_x_discrete(labels = c("Wool", "Nylon")) +
-  labs(title = "Analysis of Transfer Ratio",
+  labs(title = "Analysis of Transfer Ratio - C1",
+       x = "Transfer Time (s)",
+       y = "Transfer Ratio") +
+  facet_grid(numericFactorOrder(Mass) ~ Substrate)
+
+ggplot(ratio.dat[ratio.dat$Note == 'C2',], aes(x = numericFactorOrder(TransferTime), y = Ratio)) + 
+  geom_point(size=1) +
+  geom_errorbar(aes(ymin = Ratio-se, ymax = Ratio+se), width = 0.08) +
+  geom_point(colour = "white", size = 0.7) +
+#  scale_x_discrete(labels = c("Wool", "Nylon")) +
+  labs(title = "Analysis of Transfer Ratio - C2",
        x = "Transfer Time (s)",
        y = "Transfer Ratio") +
   facet_grid(numericFactorOrder(Mass) ~ Substrate)
@@ -524,7 +549,7 @@ ggplot(ratio.dat, aes(x = numericFactorOrder(TransferTime), y = Ratio)) +
 
 eff.dat = summarySE(final.dat, measurevar = "Efficiency", groupvars = c("Mass","TransferTime","Substrate"))
 
-knitr::kable(eff.dat, caption = "Efficiency data for SD")
+knitr::kable(eff.dat, caption = "Efficiency data for EM")
 
 ggplot(eff.dat, aes(x = numericFactorOrder(TransferTime), y = Efficiency)) + 
   geom_point(size=1) +
