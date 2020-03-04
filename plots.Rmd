@@ -594,7 +594,7 @@ mytheme = theme_minimal() +
         legend.title = element_blank())
 
 
-ggplot(wool.dat, aes(x=numericFactorOrder(TransferTime), y = ratio, group = Name, colour = Name, shape=Name)) +
+ggplot(wool.dat[wool.dat$TransferTime != '10',], aes(x=numericFactorOrder(TransferTime), y = ratio, group = Name, colour = Name, shape=Name)) +
   geom_point(size = 2, position = position_dodge(0.3)) +
   geom_errorbar(aes(ymin = ratio-se, ymax = ratio+se), width = 0.08, position = position_dodge(0.3)) +
   scale_shape_manual(values = c(0, 1, 2, 5, 6)) +
@@ -604,7 +604,7 @@ ggplot(wool.dat, aes(x=numericFactorOrder(TransferTime), y = ratio, group = Name
        y = "Transfer Ratio") +
   mytheme
 
-ggsave("fig3.png")
+ggsave("fig1.png")
 
 ```
 ```{r plotnylon}
@@ -612,7 +612,7 @@ ggsave("fig3.png")
 nylon.dat = all.ratio %>% filter(Mass == 1000 & Substrate == "Nylo01")
 #nylon.dat
 
-ggplot(nylon.dat, aes(x=numericFactorOrder(TransferTime), y = ratio, group = Name, colour = Name, shape=Name)) +
+ggplot(nylon.dat[nylon.dat$TransferTime != '10',], aes(x=numericFactorOrder(TransferTime), y = ratio, group = Name, colour = Name, shape=Name)) +
   geom_point(size = 2, position = position_dodge(0.3)) +
   geom_errorbar(aes(ymin = ratio-se, ymax = ratio+se), width = 0.08, position = position_dodge(0.3)) +
   scale_shape_manual(values = c(0, 1, 2, 5, 6)) +
@@ -622,7 +622,7 @@ ggplot(nylon.dat, aes(x=numericFactorOrder(TransferTime), y = ratio, group = Nam
        y = "Transfer Ratio") +
   mytheme
 
-ggsave("fig4.png")
+ggsave("fig2.png")
 
 ```
 ```{r plot60w}
@@ -640,7 +640,7 @@ ggplot(wool60.dat, aes(x=numericFactorOrder(Mass), y = ratio, group = Name, colo
        y = "Transfer Ratio") +
   mytheme
 
-ggsave("fig5.png")
+ggsave("fig3.png")
 
 ```
 ```{r plot60n}
@@ -658,7 +658,7 @@ ggplot(nylon60.dat, aes(x=numericFactorOrder(Mass), y = ratio, group = Name, col
        y = "Transfer Ratio") +
   mytheme
 
-ggsave("fig6.png")
+ggsave("fig4.png")
 
 ```
 
@@ -675,7 +675,7 @@ ggplot(all.ratio %>%
        y = "Transfer Ratio") +
   mytheme
 
-ggsave("fig7.png")
+ggsave("fig5.png")
 #kruskal.test(Ratio ~ Substrate, data = all.ratio.tmp)
 ```
 
@@ -728,7 +728,7 @@ all.eff = all.final %>%
 nylon.eff.dat = all.eff %>% filter(Mass == 1000 & Substrate == "Nylo01")
 #nylon.eff.dat
 
-ggplot(nylon.eff.dat, aes(x=numericFactorOrder(TransferTime), y = efficiency, group = Name, colour = Name, shape=Name)) +
+ggplot(nylon.eff.dat[nylon.eff.dat$TransferTime != '10',], aes(x=numericFactorOrder(TransferTime), y = efficiency, group = Name, colour = Name, shape=Name)) +
   geom_point(size = 2, position = position_dodge(0.3)) +
   geom_errorbar(aes(ymin = efficiency-se, ymax = efficiency+se), width = 0.08, position = position_dodge(0.3)) +
   scale_shape_manual(values = c(0, 1, 2, 5, 6)) +
@@ -738,7 +738,7 @@ ggplot(nylon.eff.dat, aes(x=numericFactorOrder(TransferTime), y = efficiency, gr
        y = "Transfer Efficiency") +
   mytheme
 
-ggsave("fig8.png")
+ggsave("fig5.png")
 
 ```
 
@@ -749,7 +749,7 @@ Not sure what the transfer efficiency is showing here? What do values >1 mean, g
 wool.eff.dat = all.eff %>% filter(Mass == 1000 & Substrate == "Wool01")
 #nylon.eff.dat
 
-ggplot(wool.eff.dat, aes(x=numericFactorOrder(TransferTime), y = efficiency, group = Name, colour = Name, shape=Name)) +
+ggplot(wool.eff.dat[wool.eff.dat$TransferTime != '10',], aes(x=numericFactorOrder(TransferTime), y = efficiency, group = Name, colour = Name, shape=Name)) +
   geom_point(size = 2, position = position_dodge(0.3)) +
   geom_errorbar(aes(ymin = efficiency-se, ymax = efficiency+se), width = 0.08, position = position_dodge(0.3)) +
   scale_shape_manual(values = c(0, 1, 2, 5, 6)) +
