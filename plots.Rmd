@@ -572,7 +572,10 @@ For the purposes of the paper let's look at the 1000g set for wool and nylon sep
 
 all.dat$Mass = as.numeric(all.dat$Mass)
 all.dat$TransferTime = as.numeric(all.dat$TransferTime)
-
+all.dat[all.dat$Substrate == 'Wool01', 'Substrate'] <- 'Wool'
+all.dat[all.dat$Substrate == 'Nylo01', 'Substrate'] <- 'Nylon'
+all.dat[all.dat$Substrate == 'Elas01', 'Substrate'] <- 'Elastane'
+all.dat[all.dat$Substrate == 'Deni01', 'Substrate'] <- 'Denim'
 
 # calc transfer ratios and efficiencies
 all.final = all.dat %>% group_by(Name, Mass, TransferTime, Experiment, Substrate, Replicate) %>%
@@ -583,7 +586,7 @@ all.ratio = all.final %>%
   group_by(Name, Mass, TransferTime, Substrate) %>%
   summarise(N = n(), ratio = mean(Ratio), se = stdErr(Ratio))
 
-wool.dat = all.ratio %>% filter(Mass == 1000 & Substrate == "Wool01")
+wool.dat = all.ratio %>% filter(Mass == 1000 & Substrate == "Wool")
 #wool.dat
 
 mytheme = theme_minimal() +
@@ -610,7 +613,7 @@ ggsave("fig1.png")
 ```
 ```{r plotnylon}
 
-nylon.dat = all.ratio %>% filter(Mass == 1000 & Substrate == "Nylo01")
+nylon.dat = all.ratio %>% filter(Mass == 1000 & Substrate == "Nylon")
 #nylon.dat
 
 ggplot(nylon.dat[nylon.dat$TransferTime != '10',], aes(x=numericFactorOrder(TransferTime), y = ratio, group = Name, colour = Name, shape=Name)) +
@@ -629,7 +632,7 @@ ggsave("fig2.png")
 ```
 ```{r plot60w}
 
-wool60.dat = all.ratio %>% filter(TransferTime == 60 & Substrate == "Wool01")
+wool60.dat = all.ratio %>% filter(TransferTime == 60 & Substrate == "Wool")
 #wool60.dat
 
 ggplot(wool60.dat, aes(x=numericFactorOrder(Mass), y = ratio, group = Name, colour = Name, shape=Name)) +
@@ -648,7 +651,7 @@ ggsave("fig3.png")
 ```
 ```{r plot60n}
 
-nylon60.dat = all.ratio %>% filter(TransferTime == 60 & Substrate == "Nylo01")
+nylon60.dat = all.ratio %>% filter(TransferTime == 60 & Substrate == "Nylon")
 #nylon60.dat
 
 ggplot(nylon60.dat, aes(x=numericFactorOrder(Mass), y = ratio, group = Name, colour = Name, shape=Name)) +
@@ -671,7 +674,7 @@ Seeing as there's very little effect from mass or time let's combine and see if 
 
 # plot boxplots
 ggplot(all.ratio %>% 
-  filter(Substrate != "Deni01"), aes(x=Name, y=ratio, fill = Substrate)) +
+  filter(Substrate != "Denim"), aes(x=Name, y=ratio, fill = Substrate)) +
   geom_boxplot() +
   labs(title = "Transfer Ratio by Experiment and Substrate",
        x = "Experiment",
@@ -720,52 +723,59 @@ ggplot(all.ratio, aes(x = numericFactorOrder(TransferTime), y = ratio, group = N
 
 A quick look at comparative transfer efficiency data.
 
-```{r plotenylon}
+
+
+Not sure what the transfer efficiency is showing here? What do values >1 mean, greater than 100% efficiency or what?
+
+```{r ploteff}
+# some replicate efficiencies are infinite 
+# remove them now
+all.final = all.final[is.finite(all.final$Efficiency),]
 
 # first calc the efficiency data
 all.eff = all.final %>% 
   group_by(Name, Mass, TransferTime, Substrate) %>%
   summarise(N = n(), efficiency = mean(Efficiency), se = stdErr(Efficiency))
 
-
-nylon.eff.dat = all.eff %>% filter(Mass == 1000 & Substrate == "Nylo01")
+eff1000.dat = all.eff %>% filter(Mass == 1000 & TransferTime != "10")
 #nylon.eff.dat
 
-ggplot(nylon.eff.dat[nylon.eff.dat$TransferTime != '10',], aes(x=numericFactorOrder(TransferTime), y = efficiency, group = Name, colour = Name, shape=Name)) +
+ggplot(eff1000.dat[eff1000.dat$Substrate %in% c('Wool', 'Nylon'),], aes(x=numericFactorOrder(TransferTime), y = efficiency, group = Name, colour = Name, shape=Name)) +
   geom_point(size = 2, position = position_dodge(0.3)) +
   geom_errorbar(aes(ymin = efficiency-se, ymax = efficiency+se), width = 0.08, position = position_dodge(0.3)) +
   scale_shape_manual(values = c(0, 1, 2, 5, 6)) +
-  labs(title = "Transfer Efficiency for Cotton to Nylon",
+  labs(title = "Transfer Efficiency",
        subtitle = "For 1000g Mass",
        x = "Transfer Time (s)",
        y = "Transfer Efficiency") +
-  mytheme
+  facet_grid(Substrate ~ .) +
+  mytheme +
+  theme(strip.background = element_rect(fill = "lightblue", colour = "black"))
 
 ggsave("fig6.png")
 
 ```
 
-Not sure what the transfer efficiency is showing here? What do values >1 mean, greater than 100% efficiency or what?
 
-```{r plotewool}
+```{r ploteff60}
+eff60.dat = all.eff %>% filter(TransferTime == 60 & Substrate != "Denim")
 
-wool.eff.dat = all.eff %>% filter(Mass == 1000 & Substrate == "Wool01")
-#nylon.eff.dat
-
-ggplot(wool.eff.dat[wool.eff.dat$TransferTime != '10',], aes(x=numericFactorOrder(TransferTime), y = efficiency, group = Name, colour = Name, shape=Name)) +
-  geom_point(size = 2, position = position_dodge(0.3)) +
+ggplot(eff60.dat, aes(x=numericFactorOrder(Mass), y = efficiency, group = Name, colour = Name, shape=Name)) +
+  geom_point(position = position_dodge(0.3)) +
   geom_errorbar(aes(ymin = efficiency-se, ymax = efficiency+se), width = 0.08, position = position_dodge(0.3)) +
   scale_shape_manual(values = c(0, 1, 2, 5, 6)) +
-  labs(title = "Transfer Efficiency for Cotton to Wool",
-       subtitle = "For 1000g Mass",
-       x = "Transfer Time (s)",
+  labs(title = "Transfer Efficiency",
+       subtitle = "For 60s Transfer Time",
+       x = "Mass (g)",
        y = "Transfer Efficiency") +
-  mytheme
+  facet_grid(Substrate ~ .) +
+  mytheme +
+  theme(strip.background = element_rect(fill = "lightblue", colour = "black"))
 
-ggsave("fig7.png")
+#ggsave("fig7.png")
+
 
 ```
-
 
 ```{r plotalleff}
 
