@@ -1,0 +1,125 @@
+---
+title: "Persistence Experiments"
+author: "Christian Cole"
+date: "10/03/2020"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+# libraries
+library(readxl)
+library(broom)
+library(plyr)
+library(tidyverse)
+library(ggplot2)
+library(forcats)
+library(tibble)
+library(dplyr)
+source('lib.R')
+```
+
+# Analysis of Persistence Experiments
+
+```{r persML}
+# Read in ML's data
+my.dat = read_xlsx("dat/20191030DatasetPaper.xlsx", sheet = "DataMl")
+
+# only use the transfer experiments for Groups 1 & 2. Groups 3-6 are not 
+# clear in what they are and don't fit with the rest. Mostly Persistence?
+# TODO - deal with Groups 3-6 later
+transfer.dat = my.dat %>% filter(Time == "00000" & Group %in% c(1,2)) %>%
+  select(c("Substrate", "ObsType", "Count", "Mass", "Duration", "Group", "Repeat")) %>%
+  rename(ObservationType = ObsType, 
+         TransferTime = Duration,
+         Experiment = Group,
+         Replicate = Repeat)
+
+# let's have a go and collating some persistence data
+persist.dat = my.dat %>% filter(Time != "00000" & Group %in% c(1,2)) %>%
+  select(c("Substrate", "ObsType", "Count", "Mass", "Duration", "Time", "Group", "Repeat")) %>%
+  rename(ObservationType = ObsType, 
+         TransferTime = Duration,
+         PersistenceTime = Time,
+         Experiment = Group,
+         Replicate = Repeat)
+
+# the above doesn't include the appropriate t = 0
+# add it back here from the transfer data
+t0.dat = transfer.dat %>% 
+  # too manual, but specify the criteria that match
+  # the persistence data
+  filter(Substrate != 'Cott01', ObservationType == "Uvpo1", Mass == "1000", TransferTime == '060') %>% 
+  # choose the right columns
+  select("Substrate", "ObservationType", "Count", "Mass", "TransferTime", "Experiment", "Replicate") %>% 
+  # add back the persistence time column
+  add_column(PersistenceTime = '0000', .after="TransferTime")
+
+persist.dat = rbind(persist.dat, t0.dat)
+
+# fix column types
+persist.dat$Count = as.numeric(persist.dat$Count)
+persist.dat$PersistenceTime = as.numeric(persist.dat$PersistenceTime)
+persist.dat$Experiment = as.character(persist.dat$Experiment)
+persist.dat$Replicate = as.character(persist.dat$Replicate)
+# some errors in the data, fix
+persist.dat[persist.dat$Substrate == 'wool01', 'Substrate'] <- 'Wool'
+persist.dat[persist.dat$Substrate == 'Wool01', 'Substrate'] <- 'Wool'
+persist.dat[persist.dat$Substrate == 'Nylo01', 'Substrate'] <- 'Nylon'
+persist.dat[persist.dat$Substrate == 'Wool' & persist.dat$Experiment == '2', 'Substrate'] <- 'Nylon'
+
+# summarise the count data
+summ.dat = summarySE(persist.dat, measurevar = "Count", groupvars = c("Substrate", "PersistenceTime", "Experiment"))
+
+ggplot(summ.dat, aes(x=numericFactorOrder(PersistenceTime), y = Count, group = Substrate, colour = Substrate, shape=Substrate)) +
+  geom_point(position = position_dodge(0.3)) +
+  geom_errorbar(aes(ymin = Count-se, ymax = Count+se), width = 0.08, position = position_dodge(0.3)) +
+ # scale_shape_manual(values = c(0, 1, 2, 5, 6)) +
+  labs(title = "Persistence Experiment",
+       subtitle = "For 60s & 1000g Transfer Expt",
+       x = "Persistence Time (min)",
+       y = "Particle Count") 
+```
+
+```{r fits}
+# ideas taken from http://douglas-watson.github.io/post/2018-09_exponential_curve_fitting/
+fit = nls(Count ~ SSasymp(PersistenceTime, Countf, Count0, log_alpha), data = summ.dat[summ.dat$Substrate == 'Nylon',])
+fit
+qplot(PersistenceTime, Count, data = augment(fit)) + geom_line(aes(y = .fitted))
+
+ggplot(augment(fit), aes(x = log10(PersistenceTime), y = Count)) + 
+  geom_point() + 
+  geom_errorbar(aes(ymin = Count-se, ymax = Count+se), width = 0.08, data = summ.dat[summ.dat$Substrate == 'Nylon',]) +
+  geom_line(aes(y = .fitted))
+```
+
+```{r}
+summ.dat %>% 
+  group_by(Substrate) %>% 
+  do(fit = nls(Count ~ SSasymp(PersistenceTime, Countf, Count0, log_alpha), data = .)) %>% 
+  tidy(fit) %>% 
+  select(Substrate, term, estimate) %>% 
+  spread(term, estimate) %>% 
+  mutate(alpha = exp(log_alpha))
+```
+
+```{r}
+
+t = 1:100
+y1 = 22 + (53 - 22) * exp(-0.02 * t) %>% jitter(10)
+y2 = 24 + (60 - 22) * exp(-0.01 * t) %>% jitter(10)
+
+
+df <- data.frame(t = t, y = y1, sensor = 'sensor1') %>% 
+  rbind(. , data.frame(t = t, y = y2, sensor = 'sensor2'))
+sensor1 <- df %>% filter(sensor == 'sensor1')
+
+
+qplot(t, y, data = df, colour = sensor)
+```
+
+```{r fit2}
+fit <- nls(y ~ SSasymp(t, yf, y0, log_alpha), data = sensor1)
+fit
+qplot(t, y, data = augment(fit)) + geom_line(aes(y = .fitted))
+```
