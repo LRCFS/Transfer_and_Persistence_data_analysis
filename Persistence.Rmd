@@ -45,6 +45,8 @@ inset_theme = theme_minimal() +
 Go through experiment sets and extract the persistence data. The data are
 defined by having "ObsType" != "Ndata".
 
+## Expt 1
+
 ```{r persML}
 # Read in ML's data
 my.dat = read_xlsx("dat/20191030DatasetPaper.xlsx", sheet = "DataMl")
@@ -93,7 +95,8 @@ p1 = ggplot(summ.dat, aes(x=PersistenceTime, y = Count, group = Substrate, colou
   labs(title = "Persistence Experiment",
        subtitle = "60s & 1000g Transfer",
        x = "Persistence Time (min)",
-       y = "Particle Count") +
+       y = "Particle Count",
+       caption = "Error bars: std error") +
   mytheme
 
 p2 = ggplot(summ.dat, aes(x=PersistenceTime, y = Count, group = Substrate, colour = Substrate, shape=Substrate)) +
@@ -132,18 +135,27 @@ On first impressions the fit looks fine. The residual error is: `r signif(ny.nlm
 A plot of the data and the fit will allow a visual comparison.
 
 ```{r fitplt}
+pts = seq(0,max(summ.dat$PersistenceTime),length=200)
+gg.fit = data.frame(y=predict(ny.fit, data.frame(PersistenceTime = pts)), x= pts)
+
 p1 = ggplot(summ.dat[summ.dat$Substrate == 'Nylon',], aes(x = PersistenceTime, y = Count)) +
-  ggtitle("Nylon Non-Linear Least Squares Fit") +
+  labs(title = "Nylon Persistence",
+       subtitle = "With non-linear least squares fit",
+       x = "Persistence Time (min)",
+       y = "Particle Count",
+       caption = "Error bars: std error") +
   geom_point() + 
   geom_errorbar(aes(ymin = Count-se, ymax = Count+se), width = 0.08, data = summ.dat[summ.dat$Substrate == 'Nylon',]) +
-  geom_line(aes(y = predict(ny.fit))) +
+  geom_line(aes(x = x, y = y), data = gg.fit) +
   xlim(c(-5,1500)) +
   mytheme
 
 p2 = ggplot(summ.dat[summ.dat$Substrate == 'Nylon',], aes(x = PersistenceTime, y = Count)) +
+  labs(x = "Persistence Time (min)",
+       y = "Particle Count") +
   geom_point() + 
   geom_errorbar(aes(ymin = Count-se, ymax = Count+se), width = 0.08, data = summ.dat[summ.dat$Substrate == 'Nylon',]) +
-  geom_line(aes(y = predict(ny.fit))) +
+  geom_line(aes(x = x, y = y), data = gg.fit) +
   inset_theme
 
 p1 + annotation_custom(ggplotGrob(p2), xmin = 700, xmax = 1600, 
@@ -163,18 +175,27 @@ wl.fit
 Residual error:  `r signif(wl.nlm_error)`
 
 ```{r woolfitplt}
+# generate more points for smooth regression line
+pts = seq(0,max(summ.dat$PersistenceTime),length=200)
+gg.fit = data.frame(y=predict(wl.fit, data.frame(PersistenceTime = pts)), x= pts)
+
+
 p1 = ggplot(summ.dat[summ.dat$Substrate == 'Wool',], aes(x = PersistenceTime, y = Count)) +
-  ggtitle("Wool Non-Linear Least Squares Fit") +
+  labs(title = "Wool Persistence",
+       subtitle = "With non-linear least squares fit",
+       x = "Persistence Time (min)",
+       y = "Particle Count",
+       caption = "Error bars: std error") +
   geom_point() + 
   geom_errorbar(aes(ymin = Count-se, ymax = Count+se), width = 0.08, data = summ.dat[summ.dat$Substrate == 'Wool',]) +
-  geom_line(aes(y = predict(wl.fit))) +
+  geom_line(aes(x = x, y = y), data = gg.fit) +
   xlim(c(-5,1500)) +
   mytheme
 
 p2 = ggplot(summ.dat[summ.dat$Substrate == 'Wool',], aes(x = PersistenceTime, y = Count)) +
   geom_point() + 
   geom_errorbar(aes(ymin = Count-se, ymax = Count+se), width = 0.08, data = summ.dat[summ.dat$Substrate == 'Wool',]) +
-  geom_line(aes(y = predict(wl.fit))) +
+  geom_line(aes(x = x, y = y), data = gg.fit) +
   inset_theme
 
 p1 + annotation_custom(ggplotGrob(p2), xmin = 700, xmax = 1600, 
@@ -194,3 +215,69 @@ knitr::kable(cmp.fit.dat)
 
 Interestingly the decay rate (alpha) is almost the same for the two materials.
 
+## Expt 2, 3 & 4
+
+No persistence data.
+
+## Expt 5
+
+The only other dataset with persistence results is EM. 
+
+```{r readEm}
+# Read in Em's data
+my.dat = read_xlsx("dat/StrEmCleanDataset.xlsx", sheet = "DataEm", trim_ws = TRUE, col_types = "text")
+
+# Fix the column name for Time - seems to have extra spaces
+my.dat = rename(my.dat, Mass = `Mass (g)`)
+my.dat = rename(my.dat, TransferTime = `TransferTime (s)`)
+my.dat = rename(my.dat, PersistenceTime = `PersistenceTime (min)`)
+#colnames(my.dat)
+
+# only use the Transfer data (PersistenceTime == "0") 
+# transfer.dat = my.dat %>% filter(PersistenceTime == 0) %>% select(c("Substrate", "ObservationType", "Count", "Mass", "TransferTime", "Experiment", "Replicate", "Note"))
+
+# only use expts 7 & 8 as they're the only ones
+# with persistence data. Plus for some reason
+# the persistence replicates are numbered from 8
+persist.dat = my.dat %>% filter(
+      Substrate != 'Cott01' & 
+      Experiment %in% c(7,8) &
+      Replicate > 7 &
+      ObservationType != 'Ndata') %>%
+      select(c("Substrate", "ObservationType", "Count", "Mass", "PersistenceTime", "Experiment", "Replicate", "Note"))
+
+# fix column types
+persist.dat$Count = as.numeric(persist.dat$Count)
+persist.dat$PersistenceTime = as.numeric(persist.dat$PersistenceTime)
+persist.dat$Experiment = as.character(persist.dat$Experiment)
+persist.dat$Replicate = as.character(persist.dat$Replicate)
+
+# summarise the count data
+summ.dat = summarySE(persist.dat, measurevar = "Count", groupvars = c("Substrate", "PersistenceTime", "Experiment", "Note"))
+knitr::kable(summ.dat, caption = "Summary of EM's Persistence Data")
+
+```
+
+However, there are nowhere near enough replicates to do anything with the data. Only have 2 reps for 0, 30, 60 and 1440 minutes. All the rest are single-point. #sadface
+
+The difference between experiments '7' and '8' are the camera settings 'C1' and 'C2' which, if they weren't, too different could combine to get more replicates. However, the 'C2' counts are consistently higher than 'C1' suggesting that they're not the same and cannot be considered replicates.
+
+```{r emplot}
+
+summ.dat = persist.dat %>% 
+  group_by(Substrate, PersistenceTime, Note) %>%
+  summarise(N = n(), Mean = mean(Count), Max = max(Count), Min = min(Count))
+
+ggplot(summ.dat, aes(x=PersistenceTime, y = Mean, colour = Note)) +
+  geom_point() +
+  geom_linerange(aes(ymin = Min, ymax = Max)) +
+  xlim(c(-10, 1500)) +
+  labs(title = "Nylon Persistence",
+       subtitle = "By different camera settings",
+       x = "Persistence Time (min)",
+       y = "Particle Count",
+       caption = "Error bars: min-max") +
+  mytheme
+  
+```
+Yup. Data are all over the place. Can't use this in the paper.
