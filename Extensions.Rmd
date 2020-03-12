@@ -76,7 +76,18 @@ names(merge.dat) = c("Mass","TransferTime","Substrate","Experiment","Replicate",
 # convert to long format
 tlong.dat = gather(merge.dat, Photo, Count, P1:P5)
 
+# rename substrates
+tlong.dat[tlong.dat$Substrate == 'Wool01', 'Substrate'] <- 'Wool'
+tlong.dat[tlong.dat$Substrate == 'Nylo01', 'Substrate'] <- 'Nylon'
+knitr::kable(head(tlong.dat, 12), caption = "'Head' of EM data")
+```
 
+## Mass Data
+
+Let's start with the 60s data over the various masses.
+
+```{r ttdat}
+# select 60s transfer time
 t60.dat = tlong.dat %>% 
   filter(TransferTime == 60) %>%
   group_by(Mass, TransferTime, Experiment, Substrate, Note, Photo) %>%
@@ -87,7 +98,7 @@ knitr::kable(head(t60.dat), caption = "'Head' of Camera Data")
 
 ```{r cwplots}
 
-t60wl.dat = t60.dat %>% filter(Substrate == "Wool01", Photo %in% c('P3', 'P4', 'P5'))
+t60wl.dat = t60.dat %>% filter(Substrate == "Wool", Photo %in% c('P3', 'P4', 'P5'))
 
 ggplot(t60wl.dat, aes(x = numericFactorOrder(Mass), y = mean, colour = Note)) +
   labs(title = "Comparison of Camera Settings with Wool",
@@ -105,7 +116,7 @@ ggplot(t60wl.dat, aes(x = numericFactorOrder(Mass), y = mean, colour = Note)) +
 
 ```{r cnplots}
 
-t60ny.dat = t60.dat %>% filter(Substrate == "Nylo01", Photo %in% c('P3', 'P4', 'P5'))
+t60ny.dat = t60.dat %>% filter(Substrate == "Nylon", Photo %in% c('P3', 'P4', 'P5'))
 
 ggplot(t60ny.dat, aes(x = numericFactorOrder(Mass), y = mean, colour = Note)) +
   labs(title = "Comparison of Camera Settings with Nylon",
@@ -120,15 +131,171 @@ ggplot(t60ny.dat, aes(x = numericFactorOrder(Mass), y = mean, colour = Note)) +
   facet_theme
 
 ```
-```{r eval=FALSE, echo=FALSE}
-# calculate the Transfer Ratios and Efficiencies
-# NB: the summarise() function can be problematic here, if plyr is loaded
-#     after dplyr. Check that first if this stops working.
-final.dat = merge.dat %>% group_by(Mass, TransferTime, Experiment, Substrate, Replicate, Note) %>% summarise(Donor = P3 - P1, Receiver = P5 - P2, Donor_post = P3 - P4) %>% mutate(Ratio = Receiver/Donor, Efficiency = Receiver/Donor_post)
 
-ratio.dat = summarySE(final.dat, measurevar = "Ratio", groupvars = c("Mass","TransferTime","Substrate", "Experiment", "Note"))
-# remove experimental conditions with < 2 replicates.
-ratio.dat = ratio.dat[ratio.dat$N > 1,]
+## Transfer Time
 
-knitr::kable(ratio.dat, caption = "Summary Data for EM Transfer Ratios")
+Compare camera settings across Transfer Time.
+
+```{r timetrend}
+
+m1000.dat = tlong.dat %>% 
+  filter(Mass == 1000, TransferTime != 10) %>%
+  group_by(Mass, TransferTime, Experiment, Substrate, Note, Photo) %>%
+  summarise(N = n(), mean = mean(Count), se = stdErr(Count))
+
+# remove single rep expts
+m1000.dat = m1000.dat[m1000.dat$N > 1,]
+
+
+knitr::kable(head(m1000.dat), caption = "'Head' of Camera Data")
+
 ```
+
+```{r masswlplt}
+
+m1000wl.dat = m1000.dat %>% filter(Substrate == "Wool", Photo %in% c('P3', 'P4', 'P5'))
+
+ggplot(m1000wl.dat, aes(x = numericFactorOrder(TransferTime), y = mean, colour = Note)) +
+  labs(title = "Comparison of Camera Settings with Wool",
+       subtitle = "Broken down by photo",
+       x = "Transfer Time (s)",
+       y = "Particle Count",
+       colour = "Camera\nSettings",
+       caption = "Error bars: Std err") +
+  geom_point(position = position_dodge(width = 0.3)) +
+  geom_errorbar(aes(ymin = mean - se, ymax = mean + se), width = 0.08, position = position_dodge(width = 0.3)) +
+  facet_grid(Photo ~ .) +
+  facet_theme
+
+```
+```{r massnyplt}
+
+m1000ny.dat = m1000.dat %>% filter(Substrate == "Nylon", Photo %in% c('P3', 'P4', 'P5'))
+
+ggplot(m1000ny.dat, aes(x = numericFactorOrder(TransferTime), y = mean, colour = Note)) +
+  labs(title = "Comparison of Camera Settings with Nylon",
+       subtitle = "Broken down by photo",
+       x = "Transfer Time (s)",
+       y = "Particle Count",
+       colour = "Camera\nSettings",
+       caption = "Error bars: Std err") +
+  geom_point(position = position_dodge(width = 0.3)) +
+  geom_errorbar(aes(ymin = mean - se, ymax = mean + se), width = 0.08, position = position_dodge(width = 0.3)) +
+  facet_grid(Photo ~ .) +
+  facet_theme
+
+```
+
+```{r c1plt}
+# compare camera settings by substrate type
+
+c1.dat = t60.dat %>% filter(Note == 'C1', Photo %in% c('P3', 'P4', 'P5'))
+  
+ggplot(c1.dat, aes(x = numericFactorOrder(Mass), y = mean, colour = Substrate)) +
+  labs(title = "Comparison of Camera Settings - C1",
+       subtitle = "Broken down by photo and substrate",
+       x = "Transfer Time (s)",
+       y = "Particle Count",
+       colour = "Camera\nSettings",
+       caption = "Error bars: Std err") +
+  geom_point(position = position_dodge(width = 0.3)) +
+  geom_errorbar(aes(ymin = mean - se, ymax = mean + se), width = 0.08, position = position_dodge(width = 0.3)) +
+  facet_grid(Photo ~ .) +
+  facet_theme
+
+```
+
+```{r c2plt}
+# compare camera settings by substrate type
+
+c2.dat = t60.dat %>% filter(Note == 'C2', Photo %in% c('P3', 'P4', 'P5'))
+  
+ggplot(c2.dat, aes(x = numericFactorOrder(Mass), y = mean, colour = Substrate)) +
+  labs(title = "Comparison of Camera Settings - C2",
+       subtitle = "Broken down by photo and substrate",
+       x = "Transfer Time (s)",
+       y = "Particle Count",
+       colour = "Camera\nSettings",
+       caption = "Error bars: Std err") +
+  geom_point(position = position_dodge(width = 0.3)) +
+  geom_errorbar(aes(ymin = mean - se, ymax = mean + se), width = 0.08, position = position_dodge(width = 0.3)) +
+  facet_grid(Photo ~ .) +
+  facet_theme
+
+```
+
+
+## Do Camera Settings Make a Statistical Difference?
+
+This is count data which won't be normally distributed, so we'll go
+with the non-parametric Mann-Whitney test.
+
+What we want to test is the effect of camera settings C1 & C2 on the 
+particle counts on the substrates. We know that the counts are dependent
+on the substrate and photo number at the very least and possible mass and
+transfer time.
+
+```{r stat1}
+# get all data for photos 3, 4 & 5 exluding time 10
+p345.dat = tlong.dat %>% 
+  filter(TransferTime != 10, Photo %in% c('P3', 'P4', 'P5')) %>%
+  select(Substrate, Photo, Mass, TransferTime, Note, Count)
+# for all the combinations of substrate, mass, transfer time and photo
+# calculate the wilcoxon p-value
+wt.dat = p345.dat %>%
+  group_by(Substrate, Mass, TransferTime, Photo) %>% 
+  do(wt = wilcox.test(Count ~ Note, data = .)) %>% 
+  tidy(wt) %>% 
+  select(Substrate, Photo, Mass, TransferTime, statistic, p.value)
+
+# as we done a lot of pairwise tests do a multiple hypothesis correction.
+# Abitrarily chosen 'BH'. Need to check if that's apropriate here.
+wt.dat = cbind(wt.dat, p.adj = p.adjust(wt.dat$p.value, method = 'BH'))
+knitr::kable(head(wt.dat[order(wt.dat$p.adj),], 10), caption = "Most significantly affected counts")
+
+```
+
+What if we take out the transfer time and mass factors? From the transfer 
+analysis we saw that there isn't really any relationship between time and
+mass vs count.
+
+```{r stat2}
+
+# get all data for photos 3, 4 & 5 exluding time 10
+p345.dat = tlong.dat %>% 
+  filter(TransferTime != 10, Photo %in% c('P3', 'P4', 'P5')) %>%
+  select(Substrate, Photo, Note, Count)
+# for all the combinations of substrate and photo
+# calculate the wilcoxon p-value
+wt.dat = p345.dat %>% 
+  group_by(Substrate, Photo) %>% 
+  do(wt = wilcox.test(Count ~ Note, data = .)) %>% 
+  tidy(wt) %>% 
+  select(Substrate, Photo, statistic, p.value)
+
+# as we done a lot of pairwise tests do a multiple hypothesis correction.
+# Abitrarily chosen 'BH'. Need to check if that's apropriate here.
+wt.dat = cbind(wt.dat, p.adj = p.adjust(wt.dat$p.value, method = 'BH'))
+knitr::kable(head(wt.dat[order(wt.dat$p.adj),], 10), caption = "Most significantly affected counts")
+```
+
+Surprise! All the wool data are now significant even after correction. Let's see what that looks like.
+
+
+```{r sigplot}
+
+wsig.dat = p345.dat %>% filter(Substrate == 'Wool')
+
+ggplot(wsig.dat, aes(x = Photo, y = Count, colour = Note)) +
+  labs(title = "All Wool Particle Counts",
+       subtitle = "by camera setting",
+       x = "Image Number",
+       y = "Particle Counts") +
+  geom_boxplot(outlier.shape = NA) +
+  geom_jitter(aes(colour = Note),position = position_jitterdodge(jitter.width = 0.1, dodge.width = 0.8), size = 0.9, shape = 21) +
+  mytheme
+```
+
+So, does this mean that camera settings may need to be substrate-specific?
+Maybe. More data required. Natch!
+
