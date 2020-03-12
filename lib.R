@@ -58,3 +58,29 @@ stdErr = function(x) {
   n = length(x)
   return(sd/sqrt(n))
 }
+
+## ggplot themes
+mytheme = theme_minimal() +
+  theme(panel.grid.minor = element_blank(),
+        panel.grid.major.x = element_blank(),
+        axis.title = element_text(size = 13, face = "bold"),
+        axis.text = element_text(size = 11),
+        legend.title = element_blank())
+
+facet_theme = theme_minimal() +
+  theme(panel.grid.minor = element_blank(),
+        panel.grid.major.x = element_blank(),
+        axis.title = element_text(size = 13, face = "bold"),
+        axis.text = element_text(size = 11),
+        plot.background = element_rect(colour = 'grey'),
+        strip.background = element_rect(fill = 'lightblue', colour = 'darkgrey'))
+
+
+inset_theme = theme_minimal() +
+  theme(plot.background = element_rect(fill = 'white', colour = 'white'),
+        panel.grid.minor = element_blank(),
+        panel.grid.major.x = element_blank(),
+        axis.title = element_text(size = 8),
+        axis.text = element_text(size = 8),
+        legend.title = element_blank(),
+        legend.position = 'NA')

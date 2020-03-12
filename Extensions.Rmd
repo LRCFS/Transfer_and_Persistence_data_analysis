@@ -1,0 +1,134 @@
+---
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+# libraries
+library(readxl)
+library(broom)
+library(plyr)
+library(tidyverse)
+library(ggplot2)
+library(forcats)
+library(tibble)
+library(dplyr)
+source('lib.R')
+```
+
+# Extension Experiments
+
+In this markdown document we'll look at the extensions to the 'baseline'
+transfer and persistence experiments.
+
+## Camera settings data
+
+In this experiment different camera settings were compared. The question 
+being whether different camera settings, labeled 'C1' and 'C2', have an
+influence on the particle counts.
+
+
+```{r readEm}
+# Read in Em's data
+my.dat = read_xlsx("dat/StrEmCleanDataset.xlsx", sheet = "DataEm", trim_ws = TRUE, col_types = "text")
+
+# Fix the column name for Time - seems to have extra spaces
+my.dat = rename(my.dat, Mass = `Mass (g)`)
+my.dat = rename(my.dat, TransferTime = `TransferTime (s)`)
+my.dat = rename(my.dat, PersistenceTime = `PersistenceTime (min)`)
+#colnames(my.dat)
+
+# only use the Transfer data (PersistenceTime == "0") 
+transfer.dat = my.dat %>% filter(PersistenceTime == 0) %>% select(c("Substrate", "ObservationType", "Count", "Mass", "TransferTime", "Experiment", "Replicate", "Note"))
+
+# also remove expt 16 as it is incomplete
+#transfer.dat = transfer.dat[as.numeric(transfer.dat$Experiment) < 16,]
+
+knitr::kable(head(transfer.dat, 20), caption = "'Head' of EM's Transfer Data")
+
+```
+
+
+```{r mungeEM}
+# fix column types
+transfer.dat$Count = as.numeric(transfer.dat$Count)
+transfer.dat$Experiment = as.character(transfer.dat$Experiment)
+transfer.dat$Replicate = as.character(transfer.dat$Replicate)
+
+# add a photoID column to keep track of which datapoint is which
+photo.id = rep(paste0("P", seq(1:5)), as.integer(nrow(transfer.dat)/5+1))
+transfer.dat = data.frame(PhotoID = photo.id[1:nrow(transfer.dat)], transfer.dat)
+
+# split out each set of photos...
+p1 = transfer.dat %>% filter(PhotoID == "P1") %>% select(Mass,TransferTime,Substrate,Experiment,Replicate,Note,Count)
+p2 = transfer.dat %>% filter(PhotoID == "P2") %>% select(Mass,TransferTime,Substrate,Experiment,Replicate,Note,Count)
+p3 = transfer.dat %>% filter(PhotoID == "P3") %>% select(Mass,TransferTime,Substrate,Experiment,Replicate,Note,Count)
+p4 = transfer.dat %>% filter(PhotoID == "P4") %>% select(Mass,TransferTime,Substrate,Experiment,Replicate,Note,Count)
+p5 = transfer.dat %>% filter(PhotoID == "P5") %>% select(Mass,TransferTime,Substrate,Experiment,Replicate,Note,Count)
+
+# ...and merge
+merge.dat = data.frame(p5[,c("Mass","TransferTime","Substrate","Experiment","Replicate", "Note")], p1$Count, p2$Count, p3$Count, p4$Count, p5$Count)
+names(merge.dat) = c("Mass","TransferTime","Substrate","Experiment","Replicate", "Note","P1","P2","P3","P4","P5")
+
+# The above has the side-effect of marking P1-P3 images with the
+# Mass and TransferTime of P5. useful for turning into long format
+
+# convert to long format
+tlong.dat = gather(merge.dat, Photo, Count, P1:P5)
+
+
+t60.dat = tlong.dat %>% 
+  filter(TransferTime == 60) %>%
+  group_by(Mass, TransferTime, Experiment, Substrate, Note, Photo) %>%
+  summarise(N = n(), mean = mean(Count), se = stdErr(Count))
+knitr::kable(head(t60.dat), caption = "'Head' of Camera Data")
+
+```
+
+```{r cwplots}
+
+t60wl.dat = t60.dat %>% filter(Substrate == "Wool01", Photo %in% c('P3', 'P4', 'P5'))
+
+ggplot(t60wl.dat, aes(x = numericFactorOrder(Mass), y = mean, colour = Note)) +
+  labs(title = "Comparison of Camera Settings with Wool",
+       subtitle = "Broken down by photo",
+       x = "Mass (g)",
+       y = "Particle Count",
+       colour = "Camera\nSettings",
+       caption = "Error bars: Std err") +
+  geom_point(position = position_dodge(width = 0.3)) +
+  geom_errorbar(aes(ymin = mean - se, ymax = mean + se), width = 0.08, position = position_dodge(width = 0.3)) +
+  facet_grid(Photo ~ .) +
+  facet_theme
+
+```
+
+```{r cnplots}
+
+t60ny.dat = t60.dat %>% filter(Substrate == "Nylo01", Photo %in% c('P3', 'P4', 'P5'))
+
+ggplot(t60ny.dat, aes(x = numericFactorOrder(Mass), y = mean, colour = Note)) +
+  labs(title = "Comparison of Camera Settings with Nylon",
+       subtitle = "Broken down by photo",
+       x = "Mass (g)",
+       y = "Particle Count",
+       colour = "Camera\nSettings",
+       caption = "Error bars: Std err") +
+  geom_point(position = position_dodge(width = 0.3)) +
+  geom_errorbar(aes(ymin = mean - se, ymax = mean + se), width = 0.08, position = position_dodge(width = 0.3)) +
+  facet_grid(Photo ~ .) +
+  facet_theme
+
+```
+```{r eval=FALSE, echo=FALSE}
+# calculate the Transfer Ratios and Efficiencies
+# NB: the summarise() function can be problematic here, if plyr is loaded
+#     after dplyr. Check that first if this stops working.
+final.dat = merge.dat %>% group_by(Mass, TransferTime, Experiment, Substrate, Replicate, Note) %>% summarise(Donor = P3 - P1, Receiver = P5 - P2, Donor_post = P3 - P4) %>% mutate(Ratio = Receiver/Donor, Efficiency = Receiver/Donor_post)
+
+ratio.dat = summarySE(final.dat, measurevar = "Ratio", groupvars = c("Mass","TransferTime","Substrate", "Experiment", "Note"))
+# remove experimental conditions with < 2 replicates.
+ratio.dat = ratio.dat[ratio.dat$N > 1,]
+
+knitr::kable(ratio.dat, caption = "Summary Data for EM Transfer Ratios")
+```
