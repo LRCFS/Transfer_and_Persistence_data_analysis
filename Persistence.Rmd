@@ -2,11 +2,20 @@
 title: "Persistence Experiments"
 author: "Christian Cole"
 date: "10/03/2020"
-output: pdf_document
+output: 
+  pdf_document: 
+    highlight: kate
+fontsize: 11
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+def.chunk.hook  <- knitr::knit_hooks$get("chunk")
+knitr::knit_hooks$set(chunk = function(x, options) {
+  x <- def.chunk.hook(x, options)
+  ifelse(options$size != "normalsize", paste0("\n \\", options$size,"\n\n", x, "\n\n \\normalsize"), x)
+})
+
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, size = 'small')
 # libraries
 library(readxl)
 library(broom)
