@@ -21,6 +21,7 @@ library(broom)
 library(plyr)
 library(tidyverse)
 library(ggplot2)
+library(ggpubr)
 library(forcats)
 library(tibble)
 library(dplyr)
@@ -114,37 +115,51 @@ knitr::kable(head(t60.dat), caption = "'Head' of Camera Data")
 
 t60wl.dat = t60.dat %>% filter(Substrate == "Wool", Photo %in% c('P3', 'P4', 'P5'))
 
-ggplot(t60wl.dat, aes(x = numericFactorOrder(Mass), y = mean, colour = Note)) +
-  labs(title = "Comparison of Camera Settings with Wool",
-       subtitle = "Broken down by photo",
+twp = ggplot(t60wl.dat, aes(x = numericFactorOrder(Mass), y = mean, colour = Note)) +
+  labs(
        x = "Mass (g)",
        y = "Particle Count",
-       colour = "Camera\nSettings",
-       caption = "Error bars: Std err") +
+       colour = "Camera\nSettings") +
+  scale_color_brewer(palette = 'Paired') +
   geom_point(position = position_dodge(width = 0.3)) +
   geom_errorbar(aes(ymin = mean - se, ymax = mean + se), width = 0.08, position = position_dodge(width = 0.3)) +
   facet_grid(Photo ~ .) +
-  facet_theme
+  facet_theme +
+  theme_pubr()
 
+twp
 ```
 
 ```{r cnplots}
 
 t60ny.dat = t60.dat %>% filter(Substrate == "Nylon", Photo %in% c('P3', 'P4', 'P5'))
 
-ggplot(t60ny.dat, aes(x = numericFactorOrder(Mass), y = mean, colour = Note)) +
-  labs(title = "Comparison of Camera Settings with Nylon",
-       subtitle = "Broken down by photo",
+tnp = ggplot(t60ny.dat, aes(x = numericFactorOrder(Mass), y = mean, colour = Note)) +
+  labs(
        x = "Mass (g)",
        y = "Particle Count",
-       colour = "Camera\nSettings",
-       caption = "Error bars: Std err") +
+       colour = "Camera\nSettings") +
+  scale_color_brewer(palette = 'Paired') +
   geom_point(position = position_dodge(width = 0.3)) +
   geom_errorbar(aes(ymin = mean - se, ymax = mean + se), width = 0.08, position = position_dodge(width = 0.3)) +
   facet_grid(Photo ~ .) +
-  facet_theme
+  facet_theme +
+  theme_pubr()
+
+tnp
+```
+
+```{r nnwtpl}
+
+nnwt = ggarrange(tnp, twp, 
+          labels = c('A', 'B'), ncol = 2, common.legend = TRUE,
+          legend = 'top')
+
+nnwt
+ggsave('extcamera1.png', nnwt, height = 4.5, units = 'in')
 
 ```
+
 
 ## Transfer Time
 
@@ -176,10 +191,12 @@ ggplot(m1000wl.dat, aes(x = numericFactorOrder(TransferTime), y = mean, colour =
        y = "Particle Count",
        colour = "Camera\nSettings",
        caption = "Error bars: Std err") +
+  scale_color_brewer(palette = 'Paired') +
   geom_point(position = position_dodge(width = 0.3)) +
   geom_errorbar(aes(ymin = mean - se, ymax = mean + se), width = 0.08, position = position_dodge(width = 0.3)) +
   facet_grid(Photo ~ .) +
-  facet_theme
+  facet_theme +
+  theme_pubr()
 
 ```
 ```{r massnyplt}
@@ -193,29 +210,35 @@ ggplot(m1000ny.dat, aes(x = numericFactorOrder(TransferTime), y = mean, colour =
        y = "Particle Count",
        colour = "Camera\nSettings",
        caption = "Error bars: Std err") +
+  scale_colour_brewer(palette = 'Paired') +
   geom_point(position = position_dodge(width = 0.3)) +
   geom_errorbar(aes(ymin = mean - se, ymax = mean + se), width = 0.08, position = position_dodge(width = 0.3)) +
   facet_grid(Photo ~ .) +
-  facet_theme
+  facet_theme +
+  theme_pubr()
 
 ```
+## Compare Camera Setting by Substrates
 
 ```{r c1plt}
 # compare camera settings by substrate type
 
 c1.dat = t60.dat %>% filter(Note == 'C1', Photo %in% c('P3', 'P4', 'P5'))
   
-ggplot(c1.dat, aes(x = numericFactorOrder(Mass), y = mean, colour = Substrate)) +
-  labs(title = "Comparison of Camera Settings - C1",
-       subtitle = "Broken down by photo and substrate",
-       x = "Transfer Time (s)",
+c1plt = ggplot(c1.dat, aes(x = numericFactorOrder(Mass), y = mean, colour = Substrate)) +
+  labs(
+       x = 'Mass (g)',
        y = "Particle Count",
-       colour = "Camera\nSettings",
+       colour = "Substrate",
        caption = "Error bars: Std err") +
+  scale_color_brewer(palette = 'Paired') +
   geom_point(position = position_dodge(width = 0.3)) +
   geom_errorbar(aes(ymin = mean - se, ymax = mean + se), width = 0.08, position = position_dodge(width = 0.3)) +
   facet_grid(Photo ~ .) +
-  facet_theme
+  facet_theme +
+  theme_pubr()
+
+c1plt
 
 ```
 
@@ -224,20 +247,30 @@ ggplot(c1.dat, aes(x = numericFactorOrder(Mass), y = mean, colour = Substrate)) 
 
 c2.dat = t60.dat %>% filter(Note == 'C2', Photo %in% c('P3', 'P4', 'P5'))
   
-ggplot(c2.dat, aes(x = numericFactorOrder(Mass), y = mean, colour = Substrate)) +
-  labs(title = "Comparison of Camera Settings - C2",
-       subtitle = "Broken down by photo and substrate",
-       x = "Transfer Time (s)",
+c2plt = ggplot(c2.dat, aes(x = numericFactorOrder(Mass), y = mean, colour = Substrate)) +
+  labs(
+       x = 'Mass (g)',
        y = "Particle Count",
-       colour = "Camera\nSettings",
+       colour = "Substrate",
        caption = "Error bars: Std err") +
+  scale_color_brewer(palette = 'Paired') +
   geom_point(position = position_dodge(width = 0.3)) +
   geom_errorbar(aes(ymin = mean - se, ymax = mean + se), width = 0.08, position = position_dodge(width = 0.3)) +
   facet_grid(Photo ~ .) +
-  facet_theme
+  facet_theme +
+  theme_pubr()
 
+c2plt
 ```
 
+```{r c12subsplt}
+
+c12subsplt = ggarrange(c1plt, c2plt, labels = c('A', 'B'), ncol = 2,
+          common.legend = TRUE, legend = 'top')
+
+c12subsplt
+ggsave('extcamera2.png', c12subsplt, height = 4.5, units = 'in')
+```
 
 ## Do Camera Settings Make a Statistical Difference?
 
@@ -300,14 +333,21 @@ Surprise! All the wool data are now significant even after correction. Let's see
 
 wsig.dat = p345.dat %>% filter(Substrate == 'Wool')
 
-ggplot(wsig.dat, aes(x = Photo, y = Count, colour = Note)) +
-  labs(title = "All Wool Particle Counts",
-       subtitle = "by camera setting",
+sigplt = ggplot(wsig.dat, aes(x = Photo, y = Count, colour = Note)) +
+  labs(
        x = "Image Number",
-       y = "Particle Counts") +
+       y = "Particle Counts",
+       colour = 'Camera\nSettings') +
+  scale_color_brewer(palette = 'Paired') +
   geom_boxplot(outlier.shape = NA) +
   geom_jitter(aes(colour = Note),position = position_jitterdodge(jitter.width = 0.1, dodge.width = 0.8), size = 0.9, shape = 21) +
-  mytheme
+  mytheme +
+  theme_pubr()
+
+sigplt
+
+ggsave('expcamera3.png', sigplt, height = 4, width = 5.5, units = 'in')
+
 ```
 
 So, does this mean that camera settings may need to be substrate-specific?
