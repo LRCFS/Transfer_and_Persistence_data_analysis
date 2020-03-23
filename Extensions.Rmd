@@ -298,7 +298,7 @@ wt.dat = p345.dat %>%
 # as we done a lot of pairwise tests do a multiple hypothesis correction.
 # Abitrarily chosen 'BH'. Need to check if that's apropriate here.
 wt.dat = cbind(wt.dat, p.adj = p.adjust(wt.dat$p.value, method = 'BH'))
-knitr::kable(head(wt.dat[order(wt.dat$p.adj),], 10), caption = "Most significantly affected counts")
+knitr::kable(head(wt.dat[order(wt.dat$p.value),], 10), caption = "Most significantly affected counts")
 
 ```
 
@@ -310,7 +310,7 @@ mass vs count.
 
 # get all data for photos 3, 4 & 5 exluding time 10
 p345.dat = tlong.dat %>% 
-  filter(TransferTime != 10, Photo %in% c('P3', 'P4', 'P5')) %>%
+  filter(TransferTime != 10, Substrate != 'Elas01', Photo %in% c('P3', 'P4', 'P5')) %>%
   select(Substrate, Photo, Note, Count)
 # for all the combinations of substrate and photo
 # calculate the wilcoxon p-value
@@ -323,7 +323,7 @@ wt.dat = p345.dat %>%
 # as we done a lot of pairwise tests do a multiple hypothesis correction.
 # Abitrarily chosen 'BH'. Need to check if that's apropriate here.
 wt.dat = cbind(wt.dat, p.adj = p.adjust(wt.dat$p.value, method = 'BH'))
-knitr::kable(head(wt.dat[order(wt.dat$p.adj),], 10), caption = "Most significantly affected counts")
+knitr::kable(wt.dat, caption = "Most significantly affected counts")
 ```
 
 Surprise! All the wool data are now significant even after correction. Let's see what that looks like.
@@ -349,7 +349,19 @@ sigplt
 ggsave('expcamera3.png', sigplt, height = 4, width = 5.5, units = 'in')
 
 ```
-
 So, does this mean that camera settings may need to be substrate-specific?
 Maybe. More data required. Natch!
+
+
+Attempt at looking at distributions.
+
+```{r distplt}
+
+ggplot(p345.dat, aes(x = Count, fill = Note)) +
+  geom_density(alpha = 0.3) +
+  facet_grid(Photo ~ ., scales = 'free_y') +
+  theme_pubr()
+
+
+```
 
