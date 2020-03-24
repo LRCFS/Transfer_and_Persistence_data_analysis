@@ -11,6 +11,7 @@ knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
 library(readxl)
 library(plyr)
 library(ggplot2)
+library(ggpubr)
 library(forcats)
 library(tibble)
 library(dplyr)
@@ -77,7 +78,7 @@ p5 = transfer.dat %>% filter(PhotoID == "P5") %>% select(Mass,TransferTime,Subst
 merge.dat = data.frame(p5[,c("Mass","TransferTime","Substrate","Experiment","Replicate")], p1$Count, p2$Count, p3$Count, p4$Count, p5$Count)
 names(merge.dat) = c("Mass","TransferTime","Substrate","Experiment","Replicate","P1","P2","P3","P4","P5")
 
-all.dat = cbind(Name = rep("A",nrow(merge.dat)), merge.dat)
+all.dat = cbind(Set = rep("A",nrow(merge.dat)), merge.dat)
 
 
 # calculate the Transfer Ratios and Efficiencies
@@ -128,12 +129,12 @@ ggplot(eff.dat, aes(x = Experiment, y = Efficiency)) +
 # start df of all ratio data for comparison
 all.ratio = summ.dat
 all.ratio = all.ratio[, -1]
-all.ratio = cbind(Name = rep("A", 2), Mass = rep(1000,2), TransferTime = rep(60,2), Substrate = c("Wool01", "Nylo01"), all.ratio)
+all.ratio = cbind(Set = rep("A", 2), Mass = rep(1000,2), TransferTime = rep(60,2), Substrate = c("Wool01", "Nylo01"), all.ratio)
 
 # do same for efficiency data
 all.eff = eff.dat
 all.eff = all.eff[, -1]
-all.eff = cbind(Name = rep("A", 2), Mass = rep(1000,2), TransferTime = rep(60,2), Substrate = c("Wool01", "Nylo01"), all.eff)
+all.eff = cbind(Set = rep("A", 2), Mass = rep(1000,2), TransferTime = rep(60,2), Substrate = c("Wool01", "Nylo01"), all.eff)
 
 ```
 
@@ -182,7 +183,7 @@ p5 = transfer.dat %>% filter(PhotoID == "P5") %>% select(Mass,TransferTime,Subst
 merge.dat = data.frame(p5[,c("Mass","TransferTime","Substrate","Experiment","Replicate")], p1$Count, p2$Count, p3$Count, p4$Count, p5$Count)
 names(merge.dat) = c("Mass","TransferTime","Substrate","Experiment","Replicate","P1","P2","P3","P4","P5")
 
-all.dat = rbind(all.dat, data.frame(Name = rep("B",nrow(merge.dat)), merge.dat))
+all.dat = rbind(all.dat, data.frame(Set = rep("B",nrow(merge.dat)), merge.dat))
 
 # calculate the Transfer Ratios and Efficiencies
 # NB: the summarise() function can be problematic here, if plyr is loaded
@@ -266,7 +267,7 @@ p5 = transfer.dat %>% filter(PhotoID == "P5") %>% select(Mass,TransferTime,Subst
 merge.dat = data.frame(p5[,c("Mass","TransferTime","Substrate","Experiment","Replicate")], p1$Count, p2$Count, p3$Count, p4$Count, p5$Count)
 names(merge.dat) = c("Mass","TransferTime","Substrate","Experiment","Replicate","P1","P2","P3","P4","P5")
 
-all.dat = rbind(all.dat, data.frame(Name = rep("C",nrow(merge.dat)), merge.dat))
+all.dat = rbind(all.dat, data.frame(Set = rep("C",nrow(merge.dat)), merge.dat))
 
 # calculate the Transfer Ratios and Efficiencies
 # NB: the summarise() function can be problematic here, if plyr is loaded
@@ -355,7 +356,7 @@ p5 = transfer.dat %>% filter(PhotoID == "P5") %>% select(Mass,TransferTime,Subst
 merge.dat = data.frame(p5[,c("Mass","TransferTime","Substrate","Experiment","Replicate")], p1$Count, p2$Count, p3$Count, p4$Count, p5$Count)
 names(merge.dat) = c("Mass","TransferTime","Substrate","Experiment","Replicate","P1","P2","P3","P4","P5")
 
-all.dat = rbind(all.dat, data.frame(Name = rep("D",nrow(merge.dat)), merge.dat))
+all.dat = rbind(all.dat, data.frame(Set = rep("D",nrow(merge.dat)), merge.dat))
 
 # calculate the Transfer Ratios and Efficiencies
 # NB: the summarise() function can be problematic here, if plyr is loaded
@@ -385,7 +386,7 @@ ggplot(ratio.dat, aes(x = numericFactorOrder(TransferTime), y = Ratio)) +
 ```{r ploteSG}
 
 eff.dat = summarySE(final.dat, measurevar = "Efficiency", groupvars = c("Mass","TransferTime","Substrate"))
-eff.dat = cbind(Name = rep("D", nrow(eff.dat)), eff.dat)
+eff.dat = cbind(Set = rep("D", nrow(eff.dat)), eff.dat)
 
 knitr::kable(eff.dat, caption = "Efficiency data for SG")
 
@@ -458,7 +459,7 @@ names(merge.dat) = c("Mass","TransferTime","Substrate","Experiment","Replicate",
 # with the other datasets
 em.dat = merge.dat[merge.dat$Note == 'C1',]
 em.dat = em.dat[, -6]
-all.dat = rbind(all.dat, data.frame(Name = rep("E",nrow(em.dat)), em.dat))
+all.dat = rbind(all.dat, data.frame(Set = rep("E",nrow(em.dat)), em.dat))
 
 # calculate the Transfer Ratios and Efficiencies
 # NB: the summarise() function can be problematic here, if plyr is loaded
@@ -521,7 +522,7 @@ ggplot(eff.dat, aes(x = numericFactorOrder(TransferTime), y = Efficiency)) +
 
 For the purposes of the paper let's look at the 1000g set for wool and nylon separately.
 
-```{r plotwool}
+```{r plottr1}
 
 all.dat$Mass = as.numeric(all.dat$Mass)
 all.dat$TransferTime = as.numeric(all.dat$TransferTime)
@@ -531,17 +532,36 @@ all.dat[all.dat$Substrate == 'Elas01', 'Substrate'] <- 'Elastane'
 all.dat[all.dat$Substrate == 'Deni01', 'Substrate'] <- 'Denim'
 
 # calc transfer ratios and efficiencies
-all.final = all.dat %>% group_by(Name, Mass, TransferTime, Experiment, Substrate, Replicate) %>%
+all.final = all.dat %>% group_by(Set, Mass, TransferTime, Experiment, Substrate, Replicate) %>%
   summarise(Donor = P3 - P1, Receiver = P5 - P2, Donor_post = P3 - P4) %>% mutate(Ratio = Receiver/Donor, Efficiency = Receiver/Donor_post)
 
 # aggregate over replicates
 all.ratio = all.final %>% 
-  group_by(Name, Mass, TransferTime, Substrate) %>%
+  group_by(Set, Mass, TransferTime, Substrate) %>%
   summarise(N = n(), ratio = mean(Ratio), se = stdErr(Ratio))
 
-wool.dat = all.ratio %>% filter(Mass == 1000 & Substrate == "Wool")
+m1000.dat = all.ratio %>% filter(Mass == 1000 & Substrate %in% c('Wool', 'Nylon'))
 #wool.dat
 
+trp1 = ggplot(m1000.dat[m1000.dat$TransferTime != '10',], aes(x=numericFactorOrder(TransferTime), y = ratio, group = Set, fill = Substrate, colour = Substrate, shape=Set)) +
+  geom_point(size = 2, position = position_dodge(0.3)) +
+  geom_errorbar(aes(ymin = ratio-se, ymax = ratio+se), width = 0.08, position = position_dodge(0.3)) +
+  scale_shape_manual(values = c(21, 22, 23, 24, 25)) +
+  scale_color_manual(values = c('#a6cee3','#1f78b4'), guide = FALSE)  +
+  scale_fill_manual(values = c('#a6cee3','#1f78b4'), guide = FALSE)  +
+  #ylim(c(0,1)) +
+  labs(shape = "Experiment",
+       x = "Transfer Time (s)",
+       y = "Transfer Ratio") +
+  facet_grid(Substrate ~ .) +
+  mytheme +
+  theme_pubr()
+
+trp1 
+```
+
+
+```{r eval=FALSE}
 ggplot(wool.dat[wool.dat$TransferTime != '10',], aes(x=numericFactorOrder(TransferTime), y = ratio, group = Name, colour = Name, shape=Name)) +
   geom_point(size = 2, position = position_dodge(0.3)) +
   geom_errorbar(aes(ymin = ratio-se, ymax = ratio+se), width = 0.08, position = position_dodge(0.3)) +
@@ -551,17 +571,19 @@ ggplot(wool.dat[wool.dat$TransferTime != '10',], aes(x=numericFactorOrder(Transf
        subtitle = "For 1000g Mass",
        x = "Transfer Time (s)",
        y = "Transfer Ratio") +
-  mytheme
+  mytheme +
+  theme_pubr()
 
 ggsave("fig1.png")
 
 ```
-```{r plotnylon}
+
+```{r plotnylon, eval = FALSE}
 
 nylon.dat = all.ratio %>% filter(Mass == 1000 & Substrate == "Nylon")
 #nylon.dat
 
-ggplot(nylon.dat[nylon.dat$TransferTime != '10',], aes(x=numericFactorOrder(TransferTime), y = ratio, group = Name, colour = Name, shape=Name)) +
+ggplot(nylon.dat[nylon.dat$TransferTime != '10',], aes(x=numericFactorOrder(TransferTime), y = ratio, group = Set, colour = Set, shape=Set)) +
   geom_point(size = 2, position = position_dodge(0.3)) +
   geom_errorbar(aes(ymin = ratio-se, ymax = ratio+se), width = 0.08, position = position_dodge(0.3)) +
   scale_shape_manual(values = c(0, 1, 2, 5, 6)) +
@@ -575,12 +597,38 @@ ggplot(nylon.dat[nylon.dat$TransferTime != '10',], aes(x=numericFactorOrder(Tran
 ggsave("fig2.png")
 
 ```
-```{r plot60w}
+```{r plottr2}
+
+t60.dat =  all.ratio %>% filter(TransferTime == 60 & Substrate %in% c("Wool", "Nylon"))
+
+trp2 = ggplot(t60.dat, aes(x=numericFactorOrder(Mass), y = ratio, group = Set, shape=Set, fill = Substrate, colour=Substrate)) +
+  geom_point(size = 2, position = position_dodge(0.3)) +
+  geom_errorbar(aes(ymin = ratio-se, ymax = ratio+se), width = 0.08, position = position_dodge(0.3)) +
+  scale_shape_manual(values = c(21, 22, 23, 24, 25)) +
+  scale_color_manual(values = c('#a6cee3','#1f78b4'), guide = FALSE)  +
+  scale_fill_manual(values = c('#a6cee3','#1f78b4'), guide = FALSE)  +
+  labs(shape = "Experiment",
+       x = "Mass (g)",
+       y = "Transfer Ratio") +
+  facet_grid(Substrate ~ .) +
+  #mytheme +
+  theme_pubr()
+
+trp2
+trp12 = ggarrange(trp1, trp2, labels = c('A', 'B'), ncol = 2,
+          common.legend = TRUE, legend = 'top')
+trp12
+
+ggsave('transratio.png', trp12,  height = 4.5, units = 'in')
+```
+
+
+```{r plot60w, eval = FALSE}
 
 wool60.dat = all.ratio %>% filter(TransferTime == 60 & Substrate == "Wool")
 #wool60.dat
 
-ggplot(wool60.dat, aes(x=numericFactorOrder(Mass), y = ratio, group = Name, colour = Name, shape=Name)) +
+ggplot(wool60.dat, aes(x=numericFactorOrder(Mass), y = ratio, group = Set, colour = Set, shape=Set)) +
   geom_point(position = position_dodge(0.3)) +
   geom_errorbar(aes(ymin = ratio-se, ymax = ratio+se), width = 0.08, position = position_dodge(0.3)) +
   scale_shape_manual(values = c(0, 1, 2, 5, 6)) +
@@ -594,12 +642,12 @@ ggplot(wool60.dat, aes(x=numericFactorOrder(Mass), y = ratio, group = Name, colo
 ggsave("fig3.png")
 
 ```
-```{r plot60n}
+```{r plot60n, eval = FALSE}
 
 nylon60.dat = all.ratio %>% filter(TransferTime == 60 & Substrate == "Nylon")
 #nylon60.dat
 
-ggplot(nylon60.dat, aes(x=numericFactorOrder(Mass), y = ratio, group = Name, colour = Name, shape=Name)) +
+ggplot(nylon60.dat, aes(x=numericFactorOrder(Mass), y = ratio, group = Set, colour = Set, shape=Set)) +
   geom_point(position = position_dodge(0.3)) +
   geom_errorbar(aes(ymin = ratio-se, ymax = ratio+se), width = 0.08, position = position_dodge(0.3)) +
   scale_shape_manual(values = c(0, 1, 2, 5, 6)) +
@@ -619,14 +667,15 @@ Seeing as there's very little effect from mass or time let's combine and see if 
 
 # plot boxplots
 ggplot(all.ratio %>% 
-  filter(Substrate != "Denim"), aes(x=Name, y=ratio, fill = Substrate)) +
+  filter(Substrate %in% c('Wool', 'Nylon')), aes(x=Set, y=ratio, fill = Substrate)) +
   geom_boxplot() +
-  labs(title = "Transfer Ratio by Experiment and Substrate",
-       x = "Experiment",
+  scale_fill_manual(values = c('#a6cee3','#1f78b4')) +
+  labs(x = "Experiment",
        y = "Transfer Ratio") +
-  mytheme
+  mytheme +
+  theme_pubr()
 
-ggsave("fig5.png")
+ggsave("trasratio_boxplot.png", height = 4, width=6, units = 'in')
 #kruskal.test(Ratio ~ Substrate, data = all.ratio.tmp)
 ```
 
@@ -638,7 +687,7 @@ ggplot(all.dat, aes(x=P3)) + geom_density() +
   labs(title = "Distribution of Particle Counts",
        substitle = "Photo 3",
        x = "") +
-  facet_grid(Name ~ ., scales = "free_y")
+  facet_grid(Set ~ ., scales = "free_y")
 
 ```
 
@@ -649,7 +698,7 @@ ggplot(all.dat, aes(x=P3)) + geom_density() +
 # for better labelling add a new mass column with a 'g'
 all.ratio$Massg = paste0(all.ratio$Mass, "g")
 
-ggplot(all.ratio, aes(x = numericFactorOrder(TransferTime), y = ratio, group = Name, colour = Name)) + 
+ggplot(all.ratio, aes(x = numericFactorOrder(TransferTime), y = ratio, group = Set, colour = Set)) + 
   geom_point(size=1, position = position_dodge(0.3)) +
   geom_errorbar(aes(ymin = ratio-se, ymax = ratio+se), width = 0.08, position = position_dodge(0.3)) +
 #  geom_point(colour = "white", size = 0.7, position = position_dodge(0.2)) +
@@ -679,45 +728,47 @@ all.final = all.final[is.finite(all.final$Efficiency),]
 
 # first calc the efficiency data
 all.eff = all.final %>% 
-  group_by(Name, Mass, TransferTime, Substrate) %>%
+  group_by(Set, Mass, TransferTime, Substrate) %>%
   summarise(N = n(), efficiency = mean(Efficiency), se = stdErr(Efficiency))
 
 eff1000.dat = all.eff %>% filter(Mass == 1000 & TransferTime != "10")
 #nylon.eff.dat
 
-ggplot(eff1000.dat[eff1000.dat$Substrate %in% c('Wool', 'Nylon'),], aes(x=numericFactorOrder(TransferTime), y = efficiency, group = Name, colour = Name, shape=Name)) +
+tep1 = ggplot(eff1000.dat[eff1000.dat$Substrate %in% c('Wool', 'Nylon'),], aes(x=numericFactorOrder(TransferTime), y = efficiency, group = Set, shape=Set, colour = Substrate, fill = Substrate)) +
   geom_point(size = 2, position = position_dodge(0.3)) +
   geom_errorbar(aes(ymin = efficiency-se, ymax = efficiency+se), width = 0.08, position = position_dodge(0.3)) +
-  scale_shape_manual(values = c(0, 1, 2, 5, 6)) +
-  labs(title = "Transfer Efficiency",
-       subtitle = "For 1000g Mass",
+  scale_shape_manual(values = c(21, 22, 23, 24, 25)) +
+  scale_color_manual(values = c('#a6cee3','#1f78b4'), guide = FALSE)  +
+  scale_fill_manual(values = c('#a6cee3','#1f78b4'), guide = FALSE)  +
+  labs(shape = "Experiment",
        x = "Transfer Time (s)",
        y = "Transfer Efficiency") +
   facet_grid(Substrate ~ .) +
-  mytheme +
-  theme(strip.background = element_rect(fill = "lightblue", colour = "black"))
+  theme_pubr()
 
-ggsave("fig6.png")
-
+tep1
 ```
 
 
 ```{r ploteff60}
 eff60.dat = all.eff %>% filter(TransferTime == 60 & Substrate != "Denim")
 
-ggplot(eff60.dat, aes(x=numericFactorOrder(Mass), y = efficiency, group = Name, colour = Name, shape=Name)) +
+tep2 = ggplot(eff60.dat, aes(x=numericFactorOrder(Mass), y = efficiency, group = Set, shape=Set, colour = Substrate, fill = Substrate)) +
   geom_point(position = position_dodge(0.3)) +
   geom_errorbar(aes(ymin = efficiency-se, ymax = efficiency+se), width = 0.08, position = position_dodge(0.3)) +
-  scale_shape_manual(values = c(0, 1, 2, 5, 6)) +
-  labs(title = "Transfer Efficiency",
-       subtitle = "For 60s Transfer Time",
+  scale_shape_manual(values = c(21, 22, 23, 24, 25)) +
+  scale_color_manual(values = c('#a6cee3','#1f78b4'), guide = FALSE)  +
+  scale_fill_manual(values = c('#a6cee3','#1f78b4'), guide = FALSE)  +
+  labs(Shape = "Experiment",
        x = "Mass (g)",
        y = "Transfer Efficiency") +
   facet_grid(Substrate ~ .) +
-  mytheme +
-  theme(strip.background = element_rect(fill = "lightblue", colour = "black"))
+  theme_pubr()
 
-#ggsave("fig7.png")
+tep12 = ggarrange(tep1, tep2, labels = c('A', 'B'), ncol = 2,
+                  common.legend = TRUE)
+tep12
+ggsave("transeff.png", tep12, height = 4, width = 6, units = 'in')
 
 
 ```
@@ -726,7 +777,7 @@ ggplot(eff60.dat, aes(x=numericFactorOrder(Mass), y = efficiency, group = Name, 
 
 all.eff$Massg = paste0(all.eff$Mass, "g")
 
-ggplot(all.eff, aes(x = numericFactorOrder(TransferTime), y = efficiency, group = Name, colour = Name)) + 
+ggplot(all.eff, aes(x = numericFactorOrder(TransferTime), y = efficiency, group = Set, colour = Set)) + 
   geom_point(size=1, position = position_dodge(0.3)) +
   geom_errorbar(aes(ymin = efficiency-se, ymax = efficiency+se), width = 0.08, position = position_dodge(0.3)) +
 #  geom_point(colour = "white", size = 0.7, position = position_dodge(0.2)) +
