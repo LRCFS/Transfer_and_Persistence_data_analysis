@@ -518,7 +518,88 @@ ggplot(eff.dat, aes(x = numericFactorOrder(TransferTime), y = Efficiency)) +
 
 ```
 
-## Combined Analysis
+## Combined Analysis - counts
+
+Currently all the photo count data is in wide format. Reformat into long format so we can do a comparison of particle counts per photo more easily.
+
+Firstly, look at all the data.
+
+```{r countcomp1}
+
+# 
+all_counts.dat = all.dat %>% 
+  gather(photo, count, P1:P5) 
+# %>% 
+#   group_by(Set, photo) %>% 
+#   summarise(N = n(), mean = mean(count), SD = sd(count), SE = sd(count)/sqrt(n())) 
+knitr::kable(head(all_counts.dat, 10), caption = "Summary statistics of particle counts for each photo type by experiment")
+
+```
+
+```{r countcomp2}
+ggplot(all_counts.dat, aes(x = Set, y = count)) + 
+  labs(title = 'Particle Counts Per Photo',
+       subtitle = 'All materials, times and masses',
+       x = 'Transfer Experiment',
+       y = 'Particle Count') +
+  geom_boxplot(width = 0.5)+
+  facet_wrap(photo ~ .)
+
+```
+
+Now, let's see the difference between wool and nylon.
+
+
+```{r countcomp4}
+all_counts.dat %>% filter(Substrate == 'Wool') %>%
+ggplot(aes(x = Set, y = count)) + 
+  labs(title = 'Particle Counts Per Photo',
+       subtitle = 'Wool and all times and masses',
+       x = 'Transfer Experiment',
+       y = 'Particle Count') +
+  geom_boxplot(width = 0.5) +
+  facet_wrap(photo ~ .)
+
+```
+
+
+```{r countcomp4}
+all_counts.dat %>% filter(Substrate == 'Nylon') %>%
+ggplot(aes(x = Set, y = count)) + 
+  labs(title = 'Particle Counts Per Photo',
+       subtitle = 'Nylon and all times and masses',
+       x = 'Transfer Experiment',
+       y = 'Particle Count') +
+  geom_boxplot(width = 0.5) +
+  facet_wrap(photo ~ .)
+
+```
+
+```{r countcomp6}
+all_counts.dat %>% filter(Substrate == 'Wool', Mass == '1000', TransferTime == '60') %>%
+ggplot(aes(x = Set, y = count)) + 
+  labs(title = 'Particle Counts Per Photo',
+       subtitle = 'Wool, 60 seconds, 1000 grams',
+       x = 'Transfer Experiment',
+       y = 'Particle Count') +
+  geom_boxplot(width = 0.5) +
+  facet_wrap(photo ~ .)
+
+```
+
+
+```{r countcomp8}
+all_counts.dat %>% filter(Substrate == 'Nylon', Mass == '1000', TransferTime == '60') %>%
+ggplot(aes(x = Set, y = count)) + 
+  labs(title = 'Particle Counts Per Photo',
+       subtitle = 'Nylon, 60 seconds, 1000 grams',
+       x = 'Transfer Experiment',
+       y = 'Particle Count') +
+  geom_boxplot(width = 0.5) +
+  facet_wrap(photo ~ .)
+
+```
+## Combined Analysis - ratios
 
 For the purposes of the paper let's look at the 1000g set for wool and nylon separately.
 
