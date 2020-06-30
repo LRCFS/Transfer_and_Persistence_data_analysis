@@ -14,6 +14,7 @@ library(ggplot2)
 library(ggpubr)
 library(forcats)
 library(tibble)
+library(tidyr)
 library(dplyr)
 source('lib.R')
 ```
@@ -529,6 +530,10 @@ Firstly, look at all the data.
 # 
 all_counts.dat = all.dat %>% 
   gather(photo, count, P1:P5) 
+
+# remove '0' padding in Transfer time
+all_counts.dat$TransferTime = as.numeric(all_counts.dat$TransferTime)
+
 # %>% 
 #   group_by(Set, photo) %>% 
 #   summarise(N = n(), mean = mean(count), SD = sd(count), SE = sd(count)/sqrt(n())) 
@@ -545,13 +550,14 @@ ggplot(all_counts.dat, aes(x = Set, y = count)) +
   geom_boxplot(width = 0.5)+
   facet_wrap(photo ~ .)
 
+ggsave('cnt1.png')
 ```
 
 Now, let's see the difference between wool and nylon.
 
 
-```{r countcomp4}
-all_counts.dat %>% filter(Substrate == 'Wool') %>%
+```{r countcomp3}
+all_counts.dat %>% filter(Substrate == 'Wool01') %>%
 ggplot(aes(x = Set, y = count)) + 
   labs(title = 'Particle Counts Per Photo',
        subtitle = 'Wool and all times and masses',
@@ -560,11 +566,13 @@ ggplot(aes(x = Set, y = count)) +
   geom_boxplot(width = 0.5) +
   facet_wrap(photo ~ .)
 
+ggsave('cnt2.png')
+
 ```
 
 
 ```{r countcomp4}
-all_counts.dat %>% filter(Substrate == 'Nylon') %>%
+all_counts.dat %>% filter(Substrate == 'Nylo01') %>%
 ggplot(aes(x = Set, y = count)) + 
   labs(title = 'Particle Counts Per Photo',
        subtitle = 'Nylon and all times and masses',
@@ -573,10 +581,14 @@ ggplot(aes(x = Set, y = count)) +
   geom_boxplot(width = 0.5) +
   facet_wrap(photo ~ .)
 
+ggsave('cnt3.png')
+
 ```
 
-```{r countcomp6}
-all_counts.dat %>% filter(Substrate == 'Wool', Mass == '1000', TransferTime == '60') %>%
+And, finally, wool and nylon for the ubiquitous 60 seconds and 1000 grams.
+
+```{r countcomp5}
+all_counts.dat %>% filter(Substrate == 'Wool01', Mass == '1000', TransferTime == '60') %>%
 ggplot(aes(x = Set, y = count)) + 
   labs(title = 'Particle Counts Per Photo',
        subtitle = 'Wool, 60 seconds, 1000 grams',
@@ -585,11 +597,13 @@ ggplot(aes(x = Set, y = count)) +
   geom_boxplot(width = 0.5) +
   facet_wrap(photo ~ .)
 
+ggsave('cnt4.png')
+
 ```
 
 
-```{r countcomp8}
-all_counts.dat %>% filter(Substrate == 'Nylon', Mass == '1000', TransferTime == '60') %>%
+```{r countcomp6}
+all_counts.dat %>% filter(Substrate == 'Nylo01', Mass == '1000', TransferTime == '60') %>%
 ggplot(aes(x = Set, y = count)) + 
   labs(title = 'Particle Counts Per Photo',
        subtitle = 'Nylon, 60 seconds, 1000 grams',
@@ -597,6 +611,8 @@ ggplot(aes(x = Set, y = count)) +
        y = 'Particle Count') +
   geom_boxplot(width = 0.5) +
   facet_wrap(photo ~ .)
+
+ggsave('cnt5.png')
 
 ```
 ## Combined Analysis - ratios
