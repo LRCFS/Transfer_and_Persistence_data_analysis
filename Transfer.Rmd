@@ -623,6 +623,61 @@ ggsave('cnt5.png')
 
 
 
+So a simulation (see the 'simul.Rmd' doc) suggests that when P3 - P1 approaches 0 the Transfer Ratio values go very high. Let's see what the distribution of P3 - P1 looks like in all our experiments.
+
+```{r p3minusp1}
+
+# redo long format now including the P3-P1 difference 
+all_counts.dat = all.dat %>% 
+  mutate(diffp3p1 = P3 - P1) %>%
+  gather(photo, count, P1:diffp3p1) 
+
+# remove '0' padding in Transfer time
+all_counts.dat$TransferTime = as.numeric(all_counts.dat$TransferTime)
+
+
+labels = list(
+  'diffp3p1' = 'P3-P1',
+  'P1' = 'Photo 1',
+  'P2' = 'Photo 2',
+  'P3' = 'Photo 3',
+  'P4' = 'Photo 4',
+  'P5' = 'Photo 5'
+)
+photo_labeller <- function(variable,value){
+  return(labels[value])
+}
+
+all_counts.dat %>% 
+#  filter(Substrate == 'Wool01',Mass == '1000', TransferTime == '60') %>%
+  ggplot(aes(x = Set, y = count)) +
+  labs(title = 'Particle Counts Per Photo',
+       subtitle = 'All materials, times and masses',
+       x = 'Transfer Experiment',
+       y = 'Particle Count') +
+  geom_boxplot(width = 0.5)+
+  geom_boxplot() +
+  facet_wrap(photo ~ ., labeller = photo_labeller)
+
+```
+
+```{r}
+
+all_counts.dat %>% 
+  filter(Substrate == 'Wool01') %>%
+  ggplot(aes(x = Set, y = count)) +
+  labs(title = 'Particle Counts Per Photo',
+       subtitle = 'Wool, all times and masses',
+       x = 'Transfer Experiment',
+       y = 'Particle Count') +
+  geom_boxplot(width = 0.5)+
+  geom_boxplot() +
+  facet_wrap(photo ~ ., labeller = photo_labeller)
+
+
+```
+
+There are no standout differences between the experiment. Oh well...
 
 ## Combined Analysis - ratios
 
