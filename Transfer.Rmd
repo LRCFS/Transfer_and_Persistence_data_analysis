@@ -15,8 +15,8 @@ library(ggpubr)
 library(forcats)
 library(tibble)
 library(tidyr)
-library(dplyr)
 source('lib.R')
+library(dplyr)
 ```
 
 ```{r themes}
@@ -47,7 +47,7 @@ my.dat = read_xlsx("dat/20191030DatasetPaper.xlsx", sheet = "DataMl")
 # TODO - deal with Groups 3-6 later
 transfer.dat = my.dat %>% filter(Time == "00000" & Group %in% c(1,2)) %>%
   select(c("Substrate", "ObsType", "Count", "Mass", "Duration", "Group", "Repeat")) %>%
-  rename(ObservationType = ObsType, 
+  dplyr::rename(ObservationType = ObsType, 
          TransferTime = Duration,
          Experiment = Group,
          Replicate = Repeat)
@@ -85,7 +85,7 @@ all.dat = cbind(Set = rep("A",nrow(merge.dat)), merge.dat)
 # calculate the Transfer Ratios and Efficiencies
 # NB: the summarise() function can be problematic here, if plyr is loaded
 #     after dplyr. Check that first if this stops working.
-final.dat = merge.dat %>% group_by(Mass, TransferTime, Experiment, Replicate) %>% summarise(Donor = P3 - P1, Receiver = P5 - P2, Donor_post = P3 - P4) %>% mutate(Ratio = Receiver/Donor, Efficiency = Receiver/Donor_post)
+final.dat = merge.dat %>% group_by(Mass, TransferTime, Experiment, Replicate) %>% mutate(Donor = P3 - P1, Receiver = P5 - P2, Donor_post = P3 - P4) %>% mutate(Ratio = Receiver/Donor, Efficiency = Receiver/Donor_post)
 
 summ.dat = summarySE(final.dat, measurevar = "Ratio", groupvars = c("Experiment"))
 ratio.dat = summ.dat[, -1]
@@ -149,7 +149,7 @@ my.dat = read_xlsx("dat/20191030DatasetPaper.xlsx", sheet = "DataSd", trim_ws = 
 # count data and group 23 is incomplete, only one replicate
 # TODO - deal with Groups 3-6 later
 transfer.dat = my.dat %>% filter(Time == 0 & Group > 8 & Group < 23) %>% select(c("Substrate", "ObsType", "Count", "Mass", "Duration", "Group", "Repeat")) %>%
-  rename(ObservationType = ObsType, 
+  dplyr::rename(ObservationType = ObsType, 
          TransferTime = Duration,
          Experiment = Group,
          Replicate = Repeat)
@@ -189,12 +189,13 @@ all.dat = rbind(all.dat, data.frame(Set = rep("B",nrow(merge.dat)), merge.dat))
 # calculate the Transfer Ratios and Efficiencies
 # NB: the summarise() function can be problematic here, if plyr is loaded
 #     after dplyr. Check that first if this stops working.
-final.dat = merge.dat %>% group_by(Mass, TransferTime, Substrate, Replicate) %>% summarise(Donor = P3 - P1, Receiver = P5 - P2, Donor_post = P3 - P4) %>% mutate(Ratio = Receiver/Donor, Efficiency = Receiver/Donor_post)
+final.dat = merge.dat %>% group_by(Mass, TransferTime, Substrate, Replicate) %>% mutate(Donor = P3 - P1, Receiver = P5 - P2, Donor_post = P3 - P4) %>% mutate(Ratio = Receiver/Donor, Efficiency = Receiver/Donor_post)
 
 ratio.dat = summarySE(final.dat, measurevar = "Ratio", groupvars = c("Mass", "TransferTime", "Substrate"))
 
 knitr::kable(ratio.dat, caption = "Summary Data for ML Transfer Ratios")
 ```
+
 ```{r plottSD}
 
 ggplot(ratio.dat, aes(x = numericFactorOrder(TransferTime), y = Ratio)) + 
@@ -208,6 +209,7 @@ ggplot(ratio.dat, aes(x = numericFactorOrder(TransferTime), y = Ratio)) +
 
 
 ```
+
 ```{r ploteSD}
 
 eff.dat = summarySE(final.dat, measurevar = "Efficiency", groupvars = c("Mass","TransferTime","Substrate"))
@@ -236,9 +238,9 @@ In trying to replicate the above for BH's data, I found that the "Time" column d
 my.dat = read_xlsx("dat/NorBhCleanDataset.xlsx", sheet = "Data", trim_ws = TRUE, col_types = "text")
 
 # Fix the column name for Time - seems to have extra spaces
-my.dat = rename(my.dat, Mass = `Mass (g)`)
-my.dat = rename(my.dat, TransferTime = `TransferTime (s)`)
-my.dat = rename(my.dat, PersistenceTime = `PersistenceTime (min)`)
+my.dat = dplyr::rename(my.dat, Mass = `Mass (g)`)
+my.dat = dplyr::rename(my.dat, TransferTime = `TransferTime (s)`)
+my.dat = dplyr::rename(my.dat, PersistenceTime = `PersistenceTime (min)`)
 #colnames(my.dat)
 
 # only use the Transfer data (PersistenceTime == "0") 
@@ -273,12 +275,13 @@ all.dat = rbind(all.dat, data.frame(Set = rep("C",nrow(merge.dat)), merge.dat))
 # calculate the Transfer Ratios and Efficiencies
 # NB: the summarise() function can be problematic here, if plyr is loaded
 #     after dplyr. Check that first if this stops working.
-final.dat = merge.dat %>% group_by(Mass, TransferTime, Substrate, Replicate) %>% summarise(Donor = P3 - P1, Receiver = P5 - P2, Donor_post = P3 - P4) %>% mutate(Ratio = Receiver/Donor, Efficiency = Receiver/Donor_post)
+final.dat = merge.dat %>% group_by(Mass, TransferTime, Substrate, Replicate) %>% mutate(Donor = P3 - P1, Receiver = P5 - P2, Donor_post = P3 - P4) %>% mutate(Ratio = Receiver/Donor, Efficiency = Receiver/Donor_post)
 
 ratio.dat = summarySE(final.dat, measurevar = "Ratio", groupvars = c("Mass","TransferTime","Substrate"))
 
 knitr::kable(ratio.dat, caption = "Summary Data for BH Transfer Ratios")
 ```
+
 ```{r plottBH}
 
 ggplot(ratio.dat, aes(x = numericFactorOrder(TransferTime), y = Ratio)) + 
@@ -293,6 +296,7 @@ ggplot(ratio.dat, aes(x = numericFactorOrder(TransferTime), y = Ratio)) +
 
 
 ```
+
 ```{r ploteBH}
 
 eff.dat = summarySE(final.dat, measurevar = "Efficiency", groupvars = c("Mass","TransferTime","Substrate"))
@@ -320,9 +324,9 @@ ggplot(eff.dat, aes(x = numericFactorOrder(TransferTime), y = Efficiency)) +
 my.dat = read_xlsx("dat/StrSgCleanDataset.xlsx", sheet = "Data", trim_ws = TRUE, col_types = "text")
 
 # Fix the column name for Time - seems to have extra spaces
-my.dat = rename(my.dat, Mass = `Mass (g)`)
-my.dat = rename(my.dat, TransferTime = `TransferTime (s)`)
-my.dat = rename(my.dat, PersistenceTime = `PersistenceTime (min)`)
+my.dat = dplyr::rename(my.dat, Mass = `Mass (g)`)
+my.dat = dplyr::rename(my.dat, TransferTime = `TransferTime (s)`)
+my.dat = dplyr::rename(my.dat, PersistenceTime = `PersistenceTime (min)`)
 #colnames(my.dat)
 
 # only use the Transfer data (PersistenceTime == "0") 
@@ -362,7 +366,7 @@ all.dat = rbind(all.dat, data.frame(Set = rep("D",nrow(merge.dat)), merge.dat))
 # calculate the Transfer Ratios and Efficiencies
 # NB: the summarise() function can be problematic here, if plyr is loaded
 #     after dplyr. Check that first if this stops working.
-final.dat = merge.dat %>% group_by(Mass, TransferTime, Substrate, Replicate) %>% summarise(Donor = P3 - P1, Receiver = P5 - P2, Donor_post = P3 - P4) %>% mutate(Ratio = Receiver/Donor, Efficiency = Receiver/Donor_post)
+final.dat = merge.dat %>% group_by(Mass, TransferTime, Substrate, Replicate) %>% mutate(Donor = P3 - P1, Receiver = P5 - P2, Donor_post = P3 - P4) %>% mutate(Ratio = Receiver/Donor, Efficiency = Receiver/Donor_post)
 
 ratio.dat = summarySE(final.dat, measurevar = "Ratio", groupvars = c("Mass","TransferTime","Substrate"))
 
@@ -419,9 +423,9 @@ for pragmatic reasons.
 my.dat = read_xlsx("dat/StrEmCleanDataset.xlsx", sheet = "DataEm", trim_ws = TRUE, col_types = "text")
 
 # Fix the column name for Time - seems to have extra spaces
-my.dat = rename(my.dat, Mass = `Mass (g)`)
-my.dat = rename(my.dat, TransferTime = `TransferTime (s)`)
-my.dat = rename(my.dat, PersistenceTime = `PersistenceTime (min)`)
+my.dat = dplyr::rename(my.dat, Mass = `Mass (g)`)
+my.dat = dplyr::rename(my.dat, TransferTime = `TransferTime (s)`)
+my.dat = dplyr::rename(my.dat, PersistenceTime = `PersistenceTime (min)`)
 #colnames(my.dat)
 
 # only use the Transfer data (PersistenceTime == "0") 
@@ -465,7 +469,7 @@ all.dat = rbind(all.dat, data.frame(Set = rep("E",nrow(em.dat)), em.dat))
 # calculate the Transfer Ratios and Efficiencies
 # NB: the summarise() function can be problematic here, if plyr is loaded
 #     after dplyr. Check that first if this stops working.
-final.dat = merge.dat %>% group_by(Mass, TransferTime, Experiment, Substrate, Replicate, Note) %>% summarise(Donor = P3 - P1, Receiver = P5 - P2, Donor_post = P3 - P4) %>% mutate(Ratio = Receiver/Donor, Efficiency = Receiver/Donor_post)
+final.dat = merge.dat %>% group_by(Mass, TransferTime, Experiment, Substrate, Replicate, Note) %>% mutate(Donor = P3 - P1, Receiver = P5 - P2, Donor_post = P3 - P4) %>% mutate(Ratio = Receiver/Donor, Efficiency = Receiver/Donor_post)
 
 ratio.dat = summarySE(final.dat, measurevar = "Ratio", groupvars = c("Mass","TransferTime","Substrate", "Experiment", "Note"))
 # remove experimental conditions with < 2 replicates.
@@ -500,6 +504,7 @@ ggplot(ratio.dat[ratio.dat$Note == 'C2',], aes(x = numericFactorOrder(TransferTi
 
 
 ```
+
 ```{r ploteEM}
 
 eff.dat = summarySE(final.dat, measurevar = "Efficiency", groupvars = c("Mass","TransferTime","Substrate"))
@@ -615,6 +620,10 @@ ggplot(aes(x = Set, y = count)) +
 ggsave('cnt5.png')
 
 ```
+
+
+
+
 ## Combined Analysis - ratios
 
 For the purposes of the paper let's look at the 1000g set for wool and nylon separately.
