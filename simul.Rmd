@@ -128,7 +128,11 @@ ggplot( aes(x = factor(p2.m, levels = c(seq(5,105,25))), y = tr)) +
 
 ## Conclusion
 
-High $P_1$ - background receiver counts - are not the cause of the observed issues with $T_r$ in expt D, but it appears to be when $P_1 \approx P_3$ that results in very high or negative $T_r$ values.
+High $P_1$ - background receiver counts - are not the cause of the observed
+issues with $T_r$ in expt D, but it appears to be when $P_1 \approx P_3$ that
+results in very high or negative $T_r$ values. This is not the case for expt D
+which suggests that the hypothesis that high $P_1$ counts are causative of high
+Transfer Ratios is incorrect. 
 
 
 
