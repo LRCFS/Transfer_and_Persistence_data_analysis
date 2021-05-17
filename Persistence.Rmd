@@ -1,7 +1,6 @@
 ---
 title: "Persistence Experiments"
 author: "Christian Cole"
-date: "10/03/2020"
 output: 
   pdf_document: 
     highlight: kate
@@ -57,9 +56,9 @@ defined by having "ObsType" != "Ndata".
 
 ## Expt 1
 
-```{r persML}
-# Read in ML's data
-my.dat = read_xlsx("dat/20191030DatasetPaper.xlsx", sheet = "DataMl")
+```{r persA}
+# Read in A data
+my.dat = read_xlsx("dat/Counts_data.xlsx", sheet = "A")
 
 # only use the persistence experiments for Groups 1 & 2. Groups 3-6 do not 
 # have enough replicates to be meaningful
@@ -87,7 +86,7 @@ persist.dat[persist.dat$Substrate == 'Wool' & persist.dat$Experiment == '2', 'Su
 
 # summarise the count data
 summ.dat = summarySE(persist.dat, measurevar = "Count", groupvars = c("Substrate", "PersistenceTime", "Experiment"))
-knitr::kable(head(summ.dat), caption = "Summary of ML's Persistence Data")
+knitr::kable(head(summ.dat), caption = "Summary of A Persistence Data")
 
 ```
 
@@ -237,7 +236,7 @@ wplt
 arrplot = ggarrange(nplt + rremove('x.title'), wplt, labels = c('A', 'B'), nrow = 2)
 
 
-ggsave("persistence.png", arrplot, height = 4.5, units = 'in')
+#ggsave("persistence.png", arrplot, height = 4.5, units = 'in')
 ```
 
 ```{r}
@@ -259,11 +258,11 @@ No persistence data.
 
 ## Expt 5
 
-The only other dataset with persistence results is EM. 
+The only other dataset with persistence results is E 
 
 ```{r readEm}
 # Read in Em's data
-my.dat = read_xlsx("dat/StrEmCleanDataset.xlsx", sheet = "DataEm", trim_ws = TRUE, col_types = "text")
+my.dat = read_xlsx("dat/Counts_data.xlsx", sheet = "E", trim_ws = TRUE, col_types = "text")
 
 # Fix the column name for Time - seems to have extra spaces
 my.dat = rename(my.dat, Mass = `Mass (g)`)
@@ -292,7 +291,7 @@ persist.dat$Replicate = as.character(persist.dat$Replicate)
 
 # summarise the count data
 summ.dat = summarySE(persist.dat, measurevar = "Count", groupvars = c("Substrate", "PersistenceTime", "Experiment", "Note"))
-knitr::kable(summ.dat, caption = "Summary of EM's Persistence Data")
+knitr::kable(summ.dat, caption = "Summary of E Persistence Data")
 
 ```
 
@@ -300,7 +299,7 @@ However, there are nowhere near enough replicates to do anything with the data. 
 
 The difference between experiments '7' and '8' are the camera settings 'C1' and 'C2' which, if they weren't, too different could combine to get more replicates. However, the 'C2' counts are consistently higher than 'C1' suggesting that they're not the same and cannot be considered replicates.
 
-```{r emplot}
+```{r plotE}
 
 summ.dat = persist.dat %>% 
   group_by(Substrate, PersistenceTime, Note) %>%
