@@ -40,9 +40,9 @@ being whether different camera settings, labeled 'C1' and 'C2', have an
 influence on the particle counts.
 
 
-```{r readEm}
-# Read in Em's data
-my.dat = read_xlsx("dat/StrEmCleanDataset.xlsx", sheet = "DataEm", trim_ws = TRUE, col_types = "text")
+```{r readE}
+# Read in E data
+my.dat = read_xlsx("dat/Counts_data.xlsx", sheet = "E", trim_ws = TRUE, col_types = "text")
 
 # Fix the column name for Time - seems to have extra spaces
 my.dat = rename(my.dat, Mass = `Mass (g)`)
@@ -55,16 +55,13 @@ transfer.dat = my.dat %>%
   filter(PersistenceTime == 0) %>% 
   select(c("Substrate", "ObservationType", "Count", "Mass", "TransferTime", "Experiment", "Replicate", "Note"))
 
-# also remove expt 16 as it is incomplete
-#transfer.dat = transfer.dat[as.numeric(transfer.dat$Experiment) < 16,]
-
-knitr::kable(head(transfer.dat, 20), caption = "'Head' of EM's Transfer Data")
+knitr::kable(head(transfer.dat, 20), caption = "'Head' of E Transfer Data")
 
 ```
 
 
 
-```{r mungeEM}
+```{r munge}
 # fix column types
 transfer.dat$Count = as.numeric(transfer.dat$Count)
 transfer.dat$Experiment = as.character(transfer.dat$Experiment)
@@ -94,7 +91,7 @@ tlong.dat = gather(merge.dat, Photo, Count, P1:P5)
 # rename substrates
 tlong.dat[tlong.dat$Substrate == 'Wool01', 'Substrate'] <- 'Wool'
 tlong.dat[tlong.dat$Substrate == 'Nylo01', 'Substrate'] <- 'Nylon'
-knitr::kable(head(tlong.dat, 12), caption = "'Head' of EM data")
+knitr::kable(head(tlong.dat, 12), caption = "'Head' of E data")
 ```
 
 ## Mass Data
@@ -156,7 +153,7 @@ nnwt = ggarrange(tnp, twp,
           legend = 'top')
 
 nnwt
-ggsave('extcamera1.png', nnwt, height = 4.5, units = 'in')
+#ggsave('extcamera1.png', nnwt, height = 4.5, units = 'in')
 
 ```
 
@@ -269,7 +266,7 @@ c12subsplt = ggarrange(c1plt, c2plt, labels = c('A', 'B'), ncol = 2,
           common.legend = TRUE, legend = 'top')
 
 c12subsplt
-ggsave('extcamera2.png', c12subsplt, height = 4.5, units = 'in')
+#ggsave('extcamera2.png', c12subsplt, height = 4.5, units = 'in')
 ```
 
 ## Do Camera Settings Make a Statistical Difference?
@@ -296,7 +293,6 @@ wt.dat = p345.dat %>%
   select(Substrate, Photo, Mass, TransferTime, statistic, p.value)
 
 # as we done a lot of pairwise tests do a multiple hypothesis correction.
-# Abitrarily chosen 'BH'. Need to check if that's apropriate here.
 wt.dat = cbind(wt.dat, p.adj = p.adjust(wt.dat$p.value, method = 'BH'))
 knitr::kable(head(wt.dat[order(wt.dat$p.value),], 10), caption = "Most significantly affected counts")
 
@@ -321,7 +317,6 @@ wt.dat = p345.dat %>%
   select(Substrate, Photo, statistic, p.value)
 
 # as we done a lot of pairwise tests do a multiple hypothesis correction.
-# Abitrarily chosen 'BH'. Need to check if that's apropriate here.
 wt.dat = cbind(wt.dat, p.adj = p.adjust(wt.dat$p.value, method = 'BH'))
 knitr::kable(wt.dat, caption = "Most significantly affected counts")
 ```

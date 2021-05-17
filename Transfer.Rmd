@@ -1,7 +1,6 @@
 ---
 title: "Transfer and Persistence Data Analysis"
 author: "Christian Cole"
-date: "22/11/2019"
 output: pdf_document
 ---
 
@@ -32,19 +31,18 @@ mytheme = theme_minimal() +
 ```
 
 
-## Plotting of Transfer Experiment Results - for ML
+## Plotting of Transfer Experiment Results - for A
 
-Starting with the simplest dataset e.g. with few samples and combinations. Using the combined spreadsheet "20191030DatasetPaper.xlsx" as all the data should be in there and is the source of the paper's figures.
+Starting with the simplest dataset e.g. with few samples and combinations. Using the combined spreadsheet "Counts_data.xlsx as all the data should be in there and is the source of the paper's figures.
 
 The Transfer experiments are defined by the "Time" column is "0" meaning there has been no Persistence performed yet. By selecting only those that value we can ignore the Persistence experiments (for the time being).
 
-```{r readML}
-# Read in ML's data
-my.dat = read_xlsx("dat/20191030DatasetPaper.xlsx", sheet = "DataMl")
+```{r readA}
+# Read in A
+my.dat = read_xlsx("dat/Counts_data.xlsx", sheet = "A")
 
 # only use the transfer experiments for Groups 1 & 2. Groups 3-6 are not 
 # clear in what they are and don't fit with the rest. Mostly Persistence?
-# TODO - deal with Groups 3-6 later
 transfer.dat = my.dat %>% filter(Time == "00000" & Group %in% c(1,2)) %>%
   select(c("Substrate", "ObsType", "Count", "Mass", "Duration", "Group", "Repeat")) %>%
   dplyr::rename(ObservationType = ObsType, 
@@ -57,7 +55,7 @@ knitr::kable(head(transfer.dat, 20), caption = "'Head' of ML's Transfer Data")
 ```
 
 
-```{r mungeML}
+```{r mungeA}
 
 # fix column types
 transfer.dat$Count = as.numeric(transfer.dat$Count)
@@ -92,10 +90,10 @@ ratio.dat = summ.dat[, -1]
 ratio.dat = cbind(Mass = rep(1000,2), TransferTime = rep(60,2), Substrate = c("Wool01", "Nylo01"), ratio.dat)
 
 
-knitr::kable(ratio.dat, caption = "Summary Data for ML Transfer Ratios")
+knitr::kable(ratio.dat, caption = "Summary Data for A Transfer Ratios")
 ```
 
-```{r plotML}
+```{r plotA}
 
 ggplot(summ.dat, aes(x = Experiment, y = Ratio)) + 
   geom_point(size=2.2) +
@@ -108,7 +106,7 @@ ggplot(summ.dat, aes(x = Experiment, y = Ratio)) +
 
 ```
 
-```{r ploteML}
+```{r ploteA}
 
 eff.dat = summarySE(final.dat, measurevar = "Efficiency", groupvars = c("Experiment"))
 
@@ -139,25 +137,24 @@ all.eff = cbind(Set = rep("A", 2), Mass = rep(1000,2), TransferTime = rep(60,2),
 
 ```
 
-## Read SD Data
+## Read B Data
 
-```{r readSD}
-# Read in SD's data
-my.dat = read_xlsx("dat/20191030DatasetPaper.xlsx", sheet = "DataSd", trim_ws = TRUE)
+```{r readB}
+# Read in B
+my.dat = read_xlsx("dat/Counts_data.xlsx", sheet = "B", trim_ws = TRUE)
 
 # only use the transfer experiments for Groups 8-22. Groups 1-7 have no 
 # count data and group 23 is incomplete, only one replicate
-# TODO - deal with Groups 3-6 later
 transfer.dat = my.dat %>% filter(Time == 0 & Group > 8 & Group < 23) %>% select(c("Substrate", "ObsType", "Count", "Mass", "Duration", "Group", "Repeat")) %>%
   dplyr::rename(ObservationType = ObsType, 
          TransferTime = Duration,
          Experiment = Group,
          Replicate = Repeat)
 
-knitr::kable(head(transfer.dat, 20), caption = "'Head' of SD's Transfer Data")
+knitr::kable(head(transfer.dat, 20), caption = "'Head' of B Transfer Data")
 
 ```
-```{r mungeSD}
+```{r mungeB}
 
 # fix column types
 transfer.dat$Count = as.numeric(transfer.dat$Count)
@@ -193,10 +190,10 @@ final.dat = merge.dat %>% group_by(Mass, TransferTime, Substrate, Replicate) %>%
 
 ratio.dat = summarySE(final.dat, measurevar = "Ratio", groupvars = c("Mass", "TransferTime", "Substrate"))
 
-knitr::kable(ratio.dat, caption = "Summary Data for ML Transfer Ratios")
+knitr::kable(ratio.dat, caption = "Summary Data for B Transfer Ratios")
 ```
 
-```{r plottSD}
+```{r plottB}
 
 ggplot(ratio.dat, aes(x = numericFactorOrder(TransferTime), y = Ratio)) + 
   geom_point(size=2.2) +
@@ -210,10 +207,10 @@ ggplot(ratio.dat, aes(x = numericFactorOrder(TransferTime), y = Ratio)) +
 
 ```
 
-```{r ploteSD}
+```{r ploteB}
 
 eff.dat = summarySE(final.dat, measurevar = "Efficiency", groupvars = c("Mass","TransferTime","Substrate"))
-knitr::kable(eff.dat, caption = "Efficiency data for SD")
+knitr::kable(eff.dat, caption = "Efficiency data for B")
 
 ggplot(eff.dat, aes(x = numericFactorOrder(TransferTime), y = Efficiency)) + 
   geom_point(size=1) +
@@ -229,13 +226,13 @@ ggplot(eff.dat, aes(x = numericFactorOrder(TransferTime), y = Efficiency)) +
 ```
 Hmm. Getting infinity values for some of the datapoints. To investigate.
 
-## Read BH Data
+## Read C Data
 
-In trying to replicate the above for BH's data, I found that the "Time" column didn't make sense (an incrementing value per row) so from now on will use the cleaned data which was used for the file-renamer.
+In trying to replicate the above for C data, I found that the "Time" column didn't make sense (an incrementing value per row) so from now on will use the cleaned data which was used for the file-renamer.
 
-```{r readBh}
-# Read in Bh's data
-my.dat = read_xlsx("dat/NorBhCleanDataset.xlsx", sheet = "Data", trim_ws = TRUE, col_types = "text")
+```{r readC}
+# Read in C data
+my.dat = read_xlsx("dat/Counts_data.xlsx", sheet = "C", trim_ws = TRUE, col_types = "text")
 
 # Fix the column name for Time - seems to have extra spaces
 my.dat = dplyr::rename(my.dat, Mass = `Mass (g)`)
@@ -246,10 +243,10 @@ my.dat = dplyr::rename(my.dat, PersistenceTime = `PersistenceTime (min)`)
 # only use the Transfer data (PersistenceTime == "0") 
 transfer.dat = my.dat %>% filter(PersistenceTime == 0) %>% select(c("Substrate", "ObservationType", "Count", "Mass", "TransferTime", "Experiment", "Replicate")) 
 
-knitr::kable(head(transfer.dat,20), caption = "'Head' of BH's Transfer Data")
+knitr::kable(head(transfer.dat,20), caption = "'Head' of C Transfer Data")
 
 ```
-```{r mungeBH}
+```{r mungeC}
 # fix column types
 transfer.dat$Count = as.numeric(transfer.dat$Count)
 transfer.dat$Experiment = as.character(transfer.dat$Experiment)
@@ -279,10 +276,10 @@ final.dat = merge.dat %>% group_by(Mass, TransferTime, Substrate, Replicate) %>%
 
 ratio.dat = summarySE(final.dat, measurevar = "Ratio", groupvars = c("Mass","TransferTime","Substrate"))
 
-knitr::kable(ratio.dat, caption = "Summary Data for BH Transfer Ratios")
+knitr::kable(ratio.dat, caption = "Summary Data for C Transfer Ratios")
 ```
 
-```{r plottBH}
+```{r plottC}
 
 ggplot(ratio.dat, aes(x = numericFactorOrder(TransferTime), y = Ratio)) + 
   geom_point(size=1) +
@@ -297,11 +294,11 @@ ggplot(ratio.dat, aes(x = numericFactorOrder(TransferTime), y = Ratio)) +
 
 ```
 
-```{r ploteBH}
+```{r ploteC}
 
 eff.dat = summarySE(final.dat, measurevar = "Efficiency", groupvars = c("Mass","TransferTime","Substrate"))
 
-knitr::kable(eff.dat, caption = "Efficiency data for SD")
+knitr::kable(eff.dat, caption = "Efficiency data for C")
 
 ggplot(eff.dat, aes(x = numericFactorOrder(TransferTime), y = Efficiency)) + 
   geom_point(size=1) +
@@ -316,12 +313,12 @@ ggplot(eff.dat, aes(x = numericFactorOrder(TransferTime), y = Efficiency)) +
 
 ```
 
-## SG Data
+## D Data
 
 
-```{r readSg}
-# Read in Sg's data
-my.dat = read_xlsx("dat/StrSgCleanDataset.xlsx", sheet = "Data", trim_ws = TRUE, col_types = "text")
+```{r readD}
+# Read in D data
+my.dat = read_xlsx("dat/Counts_data.xlsx", sheet = "D", trim_ws = TRUE, col_types = "text")
 
 # Fix the column name for Time - seems to have extra spaces
 my.dat = dplyr::rename(my.dat, Mass = `Mass (g)`)
@@ -335,12 +332,12 @@ transfer.dat = my.dat %>% filter(PersistenceTime == 0) %>% select(c("Substrate",
 # also remove expt 16 as it is incomplete
 transfer.dat = transfer.dat[as.numeric(transfer.dat$Experiment) < 16,]
 
-knitr::kable(head(transfer.dat,20), caption = "'Head' of SG's Transfer Data")
+knitr::kable(head(transfer.dat,20), caption = "'Head' of D Transfer Data")
 
 ```
 
 
-```{r mungeSG}
+```{r mungeD}
 # fix column types
 transfer.dat$Count = as.numeric(transfer.dat$Count)
 transfer.dat$Experiment = as.character(transfer.dat$Experiment)
@@ -370,10 +367,10 @@ final.dat = merge.dat %>% group_by(Mass, TransferTime, Substrate, Replicate) %>%
 
 ratio.dat = summarySE(final.dat, measurevar = "Ratio", groupvars = c("Mass","TransferTime","Substrate"))
 
-knitr::kable(ratio.dat, caption = "Summary Data for SG Transfer Ratios")
+knitr::kable(ratio.dat, caption = "Summary Data for D Transfer Ratios")
 ```
 
-```{r plottSG}
+```{r plottD}
 
 ggplot(ratio.dat, aes(x = numericFactorOrder(TransferTime), y = Ratio)) + 
   geom_point(size=1) +
@@ -388,12 +385,12 @@ ggplot(ratio.dat, aes(x = numericFactorOrder(TransferTime), y = Ratio)) +
 
 ```
 
-```{r ploteSG}
+```{r ploteD}
 
 eff.dat = summarySE(final.dat, measurevar = "Efficiency", groupvars = c("Mass","TransferTime","Substrate"))
 eff.dat = cbind(Set = rep("D", nrow(eff.dat)), eff.dat)
 
-knitr::kable(eff.dat, caption = "Efficiency data for SG")
+knitr::kable(eff.dat, caption = "Efficiency data for D")
 
 ggplot(eff.dat, aes(x = numericFactorOrder(TransferTime), y = Efficiency)) + 
   geom_point(size=1) +
@@ -408,7 +405,7 @@ ggplot(eff.dat, aes(x = numericFactorOrder(TransferTime), y = Efficiency)) +
 
 ```
 
-## EM Data
+## E Data
 
 This data is a little different from the others as this study includes an 
 analysis of camera settings - specified in the "Note" column as C1 or C2.
@@ -418,9 +415,9 @@ reported separately.
 In the comparison to the other datasets only the C1 camera data is used,
 for pragmatic reasons.
 
-```{r readEm}
-# Read in Em's data
-my.dat = read_xlsx("dat/StrEmCleanDataset.xlsx", sheet = "DataEm", trim_ws = TRUE, col_types = "text")
+```{r readE}
+# Read in E data
+my.dat = read_xlsx("dat/Counts_data.xlsx", sheet = "E", trim_ws = TRUE, col_types = "text")
 
 # Fix the column name for Time - seems to have extra spaces
 my.dat = dplyr::rename(my.dat, Mass = `Mass (g)`)
@@ -434,11 +431,11 @@ transfer.dat = my.dat %>% filter(PersistenceTime == 0) %>% select(c("Substrate",
 # also remove expt 16 as it is incomplete
 #transfer.dat = transfer.dat[as.numeric(transfer.dat$Experiment) < 16,]
 
-knitr::kable(head(transfer.dat, 20), caption = "'Head' of EM's Transfer Data")
+knitr::kable(head(transfer.dat, 20), caption = "'Head' of E Transfer Data")
 
 ```
 
-```{r mungeEM}
+```{r mungeE}
 # fix column types
 transfer.dat$Count = as.numeric(transfer.dat$Count)
 transfer.dat$Experiment = as.character(transfer.dat$Experiment)
@@ -462,9 +459,9 @@ names(merge.dat) = c("Mass","TransferTime","Substrate","Experiment","Replicate",
 # this is a little more complicated as need select only C1
 # data and then remove the note column before combining
 # with the other datasets
-em.dat = merge.dat[merge.dat$Note == 'C1',]
-em.dat = em.dat[, -6]
-all.dat = rbind(all.dat, data.frame(Set = rep("E",nrow(em.dat)), em.dat))
+e.dat = merge.dat[merge.dat$Note == 'C1',]
+e.dat = e.dat[, -6]
+all.dat = rbind(all.dat, data.frame(Set = rep("E",nrow(e.dat)), e.dat))
 
 # calculate the Transfer Ratios and Efficiencies
 # NB: the summarise() function can be problematic here, if plyr is loaded
@@ -475,12 +472,12 @@ ratio.dat = summarySE(final.dat, measurevar = "Ratio", groupvars = c("Mass","Tra
 # remove experimental conditions with < 2 replicates.
 ratio.dat = ratio.dat[ratio.dat$N > 1,]
 
-knitr::kable(ratio.dat, caption = "Summary Data for EM Transfer Ratios")
+knitr::kable(ratio.dat, caption = "Summary Data for E Transfer Ratios")
 ```
 
 Added an extra column for "Experiment" in addition to "Substrate" here as there seems to be too many replicates?? Need to investigate further.
 
-```{r plottEM}
+```{r plottE}
 
 ggplot(ratio.dat[ratio.dat$Note == 'C1',], aes(x = numericFactorOrder(TransferTime), y = Ratio)) + 
   geom_point(size=1) +
@@ -505,11 +502,11 @@ ggplot(ratio.dat[ratio.dat$Note == 'C2',], aes(x = numericFactorOrder(TransferTi
 
 ```
 
-```{r ploteEM}
+```{r ploteE}
 
 eff.dat = summarySE(final.dat, measurevar = "Efficiency", groupvars = c("Mass","TransferTime","Substrate"))
 
-knitr::kable(eff.dat, caption = "Efficiency data for EM")
+knitr::kable(eff.dat, caption = "Efficiency data for E")
 
 ggplot(eff.dat, aes(x = numericFactorOrder(TransferTime), y = Efficiency)) + 
   geom_point(size=1) +
@@ -555,7 +552,7 @@ ggplot(all_counts.dat, aes(x = Set, y = count)) +
   geom_boxplot(width = 0.5)+
   facet_wrap(photo ~ .)
 
-ggsave('cnt1.png')
+#ggsave('cnt1.png')
 ```
 
 Now, let's see the difference between wool and nylon.
@@ -571,7 +568,7 @@ ggplot(aes(x = Set, y = count)) +
   geom_boxplot(width = 0.5) +
   facet_wrap(photo ~ .)
 
-ggsave('cnt2.png')
+#ggsave('cnt2.png')
 
 ```
 
@@ -586,7 +583,7 @@ ggplot(aes(x = Set, y = count)) +
   geom_boxplot(width = 0.5) +
   facet_wrap(photo ~ .)
 
-ggsave('cnt3.png')
+#ggsave('cnt3.png')
 
 ```
 
@@ -602,7 +599,7 @@ ggplot(aes(x = Set, y = count)) +
   geom_boxplot(width = 0.5) +
   facet_wrap(photo ~ .)
 
-ggsave('cnt4.png')
+#ggsave('cnt4.png')
 
 ```
 
@@ -617,7 +614,7 @@ ggplot(aes(x = Set, y = count)) +
   geom_boxplot(width = 0.5) +
   facet_wrap(photo ~ .)
 
-ggsave('cnt5.png')
+#ggsave('cnt5.png')
 
 ```
 
@@ -722,42 +719,6 @@ trp1
 ```
 
 
-```{r eval=FALSE}
-ggplot(wool.dat[wool.dat$TransferTime != '10',], aes(x=numericFactorOrder(TransferTime), y = ratio, group = Name, colour = Name, shape=Name)) +
-  geom_point(size = 2, position = position_dodge(0.3)) +
-  geom_errorbar(aes(ymin = ratio-se, ymax = ratio+se), width = 0.08, position = position_dodge(0.3)) +
-  scale_shape_manual(values = c(0, 1, 2, 5, 6)) +
-  ylim(c(0,1)) +
-  labs(title = "Transfer Ratio for Cotton to Wool",
-       subtitle = "For 1000g Mass",
-       x = "Transfer Time (s)",
-       y = "Transfer Ratio") +
-  mytheme +
-  theme_pubr()
-
-ggsave("fig1.png")
-
-```
-
-```{r plotnylon, eval = FALSE}
-
-nylon.dat = all.ratio %>% filter(Mass == 1000 & Substrate == "Nylon")
-#nylon.dat
-
-ggplot(nylon.dat[nylon.dat$TransferTime != '10',], aes(x=numericFactorOrder(TransferTime), y = ratio, group = Set, colour = Set, shape=Set)) +
-  geom_point(size = 2, position = position_dodge(0.3)) +
-  geom_errorbar(aes(ymin = ratio-se, ymax = ratio+se), width = 0.08, position = position_dodge(0.3)) +
-  scale_shape_manual(values = c(0, 1, 2, 5, 6)) +
-  ylim(c(0,1.2)) +
-  labs(title = "Transfer Ratio for Cotton to Nylon",
-       subtitle = "For 1000g Mass",
-       x = "Transfer Time (s)",
-       y = "Transfer Ratio") +
-  mytheme
-
-ggsave("fig2.png")
-
-```
 ```{r plottr2}
 
 t60.dat =  all.ratio %>% filter(TransferTime == 60 & Substrate %in% c("Wool", "Nylon"))
@@ -780,7 +741,7 @@ trp12 = ggarrange(trp1, trp2, labels = c('A', 'B'), ncol = 2,
           common.legend = TRUE, legend = 'top')
 trp12
 
-ggsave('transratio.png', trp12,  height = 4.5, units = 'in')
+#ggsave('transratio.png', trp12,  height = 4.5, units = 'in')
 ```
 
 
@@ -800,7 +761,7 @@ ggplot(wool60.dat, aes(x=numericFactorOrder(Mass), y = ratio, group = Set, colou
        y = "Transfer Ratio") +
   mytheme
 
-ggsave("fig3.png")
+#ggsave("fig3.png")
 
 ```
 ```{r plot60n, eval = FALSE}
@@ -818,7 +779,7 @@ ggplot(nylon60.dat, aes(x=numericFactorOrder(Mass), y = ratio, group = Set, colo
        y = "Transfer Ratio") +
   mytheme
 
-ggsave("fig4.png")
+#ggsave("fig4.png")
 
 ```
 
@@ -836,7 +797,7 @@ ggplot(all.ratio %>%
   mytheme +
   theme_pubr()
 
-ggsave("trasratio_boxplot.png", height = 4, width=6, units = 'in')
+#ggsave("transratio_boxplot.png", height = 4, width=6, units = 'in')
 #kruskal.test(Ratio ~ Substrate, data = all.ratio.tmp)
 ```
 
@@ -877,8 +838,6 @@ ggplot(all.ratio, aes(x = numericFactorOrder(TransferTime), y = ratio, group = S
 ### Transfer Efficiencies
 
 A quick look at comparative transfer efficiency data.
-
-
 
 Not sure what the transfer efficiency is showing here? What do values >1 mean, greater than 100% efficiency or what?
 
@@ -929,7 +888,7 @@ tep2 = ggplot(eff60.dat, aes(x=numericFactorOrder(Mass), y = efficiency, group =
 tep12 = ggarrange(tep1, tep2, labels = c('A', 'B'), ncol = 2,
                   common.legend = TRUE)
 tep12
-ggsave("transeff.png", tep12, height = 4, width = 6, units = 'in')
+#ggsave("transeff.png", tep12, height = 4, width = 6, units = 'in')
 
 
 ```
