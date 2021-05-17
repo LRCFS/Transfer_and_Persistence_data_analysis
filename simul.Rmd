@@ -105,13 +105,13 @@ ggplot(aes(x = factor(p1.m, levels = c(seq(5,105,25))), y = tr)) +
   geom_boxplot() +
   facet_wrap(p3.m ~ ., scales = 'free_y')
 
-ggsave('p1_count_simulation.png')
+#ggsave('p1_count_simulation.png')
 
 ```
 
 Figure 1 shows that for $P_3 > 150$ there is a predictable, linear relationship between $P_1$ and $P_3$ counts. However, with $P_3 \leq 150$  and mean $P_1$ increasing the $T_r$ relationship gets very unstable - high positive and negative values. This suggests that it's not just high $P_1$ counts that are the problem, but it's when $P_1 \approx P_3$ then $T_r$ is extreme.
 
-As a comparison if we look at the $P_2$, the receiver background, relationship with $T_r$ there is no issue either at high counts or when $P_2 \approx P_3$.
+As a comparison if we look at the $P_2$ (Figure 2), the receiver background, relationship with $T_r$ there is no issue either at high counts or when $P_2 \approx P_3$.
 
 ```{r p2plt, fig.cap = 'Simulation of Transfer Ratio as a Function of P2 Counts'}
 df.dat %>% filter(p1.m == 5) %>%
