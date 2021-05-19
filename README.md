@@ -1,5 +1,7 @@
 # Transfer and Persistence Data Analysis
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4772478.svg)](https://doi.org/10.5281/zenodo.4772478)
+
 This github repository contains the R analyses for the Transfer and Persistence
 publication (see CITATION for full reference):
 
