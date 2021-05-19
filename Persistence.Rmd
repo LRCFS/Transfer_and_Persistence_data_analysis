@@ -64,14 +64,14 @@ my.dat = read_xlsx("dat/Counts_data.xlsx", sheet = "A")
 # have enough replicates to be meaningful
 persist.dat = my.dat %>% filter(
       Substrate != 'Cott01' & 
-      Group %in% c(1,2) & 
-      ObsType != 'Ndata') %>%
-  select(c("Substrate", "ObsType", "Count", "Mass", "Duration", "Time", "Group", "Repeat")) %>%
-  rename(ObservationType = ObsType, 
-         TransferTime = Duration,
-         PersistenceTime = Time,
-         Experiment = Group,
-         Replicate = Repeat)
+      Experiment %in% c(1,2) & 
+      ObservationType != 'Ndata') %>%
+  select(c("Substrate", "ObservationType", "Count", "Mass (g)", "TransferTime (s)",
+           "PersistenceTime (min)", "Experiment", "Replicate")) %>%
+  dplyr::rename(Mass = `Mass (g)`, 
+         TransferTime = `TransferTime (s)`,
+         PersistenceTime = `PersistenceTime (min)`)
+
 
 # fix column types
 persist.dat$Count = as.numeric(persist.dat$Count)
@@ -235,7 +235,7 @@ wplt
 
 arrplot = ggarrange(nplt + rremove('x.title'), wplt, labels = c('A', 'B'), nrow = 2)
 
-
+arrplot
 #ggsave("persistence.png", arrplot, height = 4.5, units = 'in')
 ```
 
@@ -264,24 +264,19 @@ The only other dataset with persistence results is E
 # Read in Em's data
 my.dat = read_xlsx("dat/Counts_data.xlsx", sheet = "E", trim_ws = TRUE, col_types = "text")
 
-# Fix the column name for Time - seems to have extra spaces
-my.dat = rename(my.dat, Mass = `Mass (g)`)
-my.dat = rename(my.dat, TransferTime = `TransferTime (s)`)
-my.dat = rename(my.dat, PersistenceTime = `PersistenceTime (min)`)
-#colnames(my.dat)
-
-# only use the Transfer data (PersistenceTime == "0") 
-# transfer.dat = my.dat %>% filter(PersistenceTime == 0) %>% select(c("Substrate", "ObservationType", "Count", "Mass", "TransferTime", "Experiment", "Replicate", "Note"))
 
 # only use expts 7 & 8 as they're the only ones
 # with persistence data. Plus for some reason
 # the persistence replicates are numbered from 8
 persist.dat = my.dat %>% filter(
       Substrate != 'Cott01' & 
-      Experiment %in% c(7,8) &
+      Experiment %in% c(7,8) & 
       Replicate > 7 &
       ObservationType != 'Ndata') %>%
-      select(c("Substrate", "ObservationType", "Count", "Mass", "PersistenceTime", "Experiment", "Replicate", "Note"))
+  select(c("Substrate", "ObservationType", "Count", "Mass (g)", 
+           "PersistenceTime (min)", "Experiment", "Replicate", "Note")) %>%
+  dplyr::rename(Mass = `Mass (g)`, 
+         PersistenceTime = `PersistenceTime (min)`)
 
 # fix column types
 persist.dat$Count = as.numeric(persist.dat$Count)

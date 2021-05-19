@@ -41,16 +41,14 @@ The Transfer experiments are defined by the "Time" column is "0" meaning there h
 # Read in A
 my.dat = read_xlsx("dat/Counts_data.xlsx", sheet = "A")
 
-# only use the transfer experiments for Groups 1 & 2. Groups 3-6 are not 
+# only use the transfer experiments 1 & 2. Experiments 3-6 are not 
 # clear in what they are and don't fit with the rest. Mostly Persistence?
-transfer.dat = my.dat %>% filter(Time == "00000" & Group %in% c(1,2)) %>%
-  select(c("Substrate", "ObsType", "Count", "Mass", "Duration", "Group", "Repeat")) %>%
-  dplyr::rename(ObservationType = ObsType, 
-         TransferTime = Duration,
-         Experiment = Group,
-         Replicate = Repeat)
+transfer.dat = my.dat %>% filter(`PersistenceTime (min)` == 0 & Experiment %in% c(1,2)) %>%
+  select(c("Substrate", "ObservationType", "Count", "Mass (g)", "TransferTime (s)", "Experiment", "Replicate")) %>%
+  dplyr::rename(Mass = `Mass (g)`, 
+         TransferTime = `TransferTime (s)`)
 
-knitr::kable(head(transfer.dat, 20), caption = "'Head' of ML's Transfer Data")
+knitr::kable(head(transfer.dat, 20), caption = "'Head' of A Transfer Data")
 
 ```
 
@@ -145,11 +143,10 @@ my.dat = read_xlsx("dat/Counts_data.xlsx", sheet = "B", trim_ws = TRUE)
 
 # only use the transfer experiments for Groups 8-22. Groups 1-7 have no 
 # count data and group 23 is incomplete, only one replicate
-transfer.dat = my.dat %>% filter(Time == 0 & Group > 8 & Group < 23) %>% select(c("Substrate", "ObsType", "Count", "Mass", "Duration", "Group", "Repeat")) %>%
-  dplyr::rename(ObservationType = ObsType, 
-         TransferTime = Duration,
-         Experiment = Group,
-         Replicate = Repeat)
+transfer.dat = my.dat %>% filter(`PersistenceTime (min)` == 0 & Experiment > 8 & Experiment < 23) %>%
+  select(c("Substrate", "ObservationType", "Count", "Mass (g)", "TransferTime (s)", "Experiment", "Replicate")) %>%
+  dplyr::rename(Mass = `Mass (g)`, 
+         TransferTime = `TransferTime (s)`)
 
 knitr::kable(head(transfer.dat, 20), caption = "'Head' of B Transfer Data")
 
@@ -234,14 +231,11 @@ In trying to replicate the above for C data, I found that the "Time" column didn
 # Read in C data
 my.dat = read_xlsx("dat/Counts_data.xlsx", sheet = "C", trim_ws = TRUE, col_types = "text")
 
-# Fix the column name for Time - seems to have extra spaces
-my.dat = dplyr::rename(my.dat, Mass = `Mass (g)`)
-my.dat = dplyr::rename(my.dat, TransferTime = `TransferTime (s)`)
-my.dat = dplyr::rename(my.dat, PersistenceTime = `PersistenceTime (min)`)
-#colnames(my.dat)
-
 # only use the Transfer data (PersistenceTime == "0") 
-transfer.dat = my.dat %>% filter(PersistenceTime == 0) %>% select(c("Substrate", "ObservationType", "Count", "Mass", "TransferTime", "Experiment", "Replicate")) 
+transfer.dat = my.dat %>% filter(`PersistenceTime (min)` == 0) %>%
+  select(c("Substrate", "ObservationType", "Count", "Mass (g)", "TransferTime (s)", "Experiment", "Replicate")) %>%
+  dplyr::rename(Mass = `Mass (g)`, 
+         TransferTime = `TransferTime (s)`)
 
 knitr::kable(head(transfer.dat,20), caption = "'Head' of C Transfer Data")
 
@@ -320,14 +314,11 @@ ggplot(eff.dat, aes(x = numericFactorOrder(TransferTime), y = Efficiency)) +
 # Read in D data
 my.dat = read_xlsx("dat/Counts_data.xlsx", sheet = "D", trim_ws = TRUE, col_types = "text")
 
-# Fix the column name for Time - seems to have extra spaces
-my.dat = dplyr::rename(my.dat, Mass = `Mass (g)`)
-my.dat = dplyr::rename(my.dat, TransferTime = `TransferTime (s)`)
-my.dat = dplyr::rename(my.dat, PersistenceTime = `PersistenceTime (min)`)
-#colnames(my.dat)
-
 # only use the Transfer data (PersistenceTime == "0") 
-transfer.dat = my.dat %>% filter(PersistenceTime == 0) %>% select(c("Substrate", "ObservationType", "Count", "Mass", "TransferTime", "Experiment", "Replicate"))
+transfer.dat = my.dat %>% filter(`PersistenceTime (min)` == 0) %>%
+  select(c("Substrate", "ObservationType", "Count", "Mass (g)", "TransferTime (s)", "Experiment", "Replicate")) %>%
+  dplyr::rename(Mass = `Mass (g)`, 
+         TransferTime = `TransferTime (s)`)
 
 # also remove expt 16 as it is incomplete
 transfer.dat = transfer.dat[as.numeric(transfer.dat$Experiment) < 16,]
@@ -419,14 +410,11 @@ for pragmatic reasons.
 # Read in E data
 my.dat = read_xlsx("dat/Counts_data.xlsx", sheet = "E", trim_ws = TRUE, col_types = "text")
 
-# Fix the column name for Time - seems to have extra spaces
-my.dat = dplyr::rename(my.dat, Mass = `Mass (g)`)
-my.dat = dplyr::rename(my.dat, TransferTime = `TransferTime (s)`)
-my.dat = dplyr::rename(my.dat, PersistenceTime = `PersistenceTime (min)`)
-#colnames(my.dat)
-
 # only use the Transfer data (PersistenceTime == "0") 
-transfer.dat = my.dat %>% filter(PersistenceTime == 0) %>% select(c("Substrate", "ObservationType", "Count", "Mass", "TransferTime", "Experiment", "Replicate", "Note"))
+transfer.dat = my.dat %>% filter(`PersistenceTime (min)` == 0) %>%
+  select(c("Substrate", "ObservationType", "Count", "Mass (g)", "TransferTime (s)", "Experiment", "Replicate", "Note")) %>%
+  dplyr::rename(Mass = `Mass (g)`, 
+         TransferTime = `TransferTime (s)`)
 
 # also remove expt 16 as it is incomplete
 #transfer.dat = transfer.dat[as.numeric(transfer.dat$Experiment) < 16,]

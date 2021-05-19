@@ -44,16 +44,11 @@ influence on the particle counts.
 # Read in E data
 my.dat = read_xlsx("dat/Counts_data.xlsx", sheet = "E", trim_ws = TRUE, col_types = "text")
 
-# Fix the column name for Time - seems to have extra spaces
-my.dat = rename(my.dat, Mass = `Mass (g)`)
-my.dat = rename(my.dat, TransferTime = `TransferTime (s)`)
-my.dat = rename(my.dat, PersistenceTime = `PersistenceTime (min)`)
-#colnames(my.dat)
-
 # only use the Transfer data (PersistenceTime == "0") 
-transfer.dat = my.dat %>% 
-  filter(PersistenceTime == 0) %>% 
-  select(c("Substrate", "ObservationType", "Count", "Mass", "TransferTime", "Experiment", "Replicate", "Note"))
+transfer.dat = my.dat %>% filter(`PersistenceTime (min)` == 0) %>%
+  select(c("Substrate", "ObservationType", "Count", "Mass (g)", "TransferTime (s)", "Experiment", "Replicate", "Note")) %>%
+  dplyr::rename(Mass = `Mass (g)`, 
+         TransferTime = `TransferTime (s)`)
 
 knitr::kable(head(transfer.dat, 20), caption = "'Head' of E Transfer Data")
 
