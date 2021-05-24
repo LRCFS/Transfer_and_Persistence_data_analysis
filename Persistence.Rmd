@@ -236,7 +236,7 @@ wplt
 arrplot = ggarrange(nplt + rremove('x.title'), wplt, labels = c('A', 'B'), nrow = 2)
 
 arrplot
-#ggsave("persistence.png", arrplot, height = 4.5, units = 'in')
+#ggsave("figure5.tiff", arrplot, height = 4.5, units = 'in', dpi=300)
 ```
 
 ```{r}

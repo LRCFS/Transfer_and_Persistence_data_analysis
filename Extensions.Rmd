@@ -148,7 +148,7 @@ nnwt = ggarrange(tnp, twp,
           legend = 'top')
 
 nnwt
-#ggsave('extcamera1.png', nnwt, height = 4.5, units = 'in')
+ggsave('figure6.tiff', nnwt, height = 4.5, units = 'in', dpi=300)
 
 ```
 
@@ -221,8 +221,7 @@ c1plt = ggplot(c1.dat, aes(x = numericFactorOrder(Mass), y = mean, colour = Subs
   labs(
        x = 'Mass (g)',
        y = "Particle Count",
-       colour = "Substrate",
-       caption = "Error bars: Std err") +
+       colour = "Substrate") +
   scale_color_brewer(palette = 'Paired') +
   geom_point(position = position_dodge(width = 0.3)) +
   geom_errorbar(aes(ymin = mean - se, ymax = mean + se), width = 0.08, position = position_dodge(width = 0.3)) +
@@ -243,8 +242,7 @@ c2plt = ggplot(c2.dat, aes(x = numericFactorOrder(Mass), y = mean, colour = Subs
   labs(
        x = 'Mass (g)',
        y = "Particle Count",
-       colour = "Substrate",
-       caption = "Error bars: Std err") +
+       colour = "Substrate") +
   scale_color_brewer(palette = 'Paired') +
   geom_point(position = position_dodge(width = 0.3)) +
   geom_errorbar(aes(ymin = mean - se, ymax = mean + se), width = 0.08, position = position_dodge(width = 0.3)) +
@@ -261,7 +259,7 @@ c12subsplt = ggarrange(c1plt, c2plt, labels = c('A', 'B'), ncol = 2,
           common.legend = TRUE, legend = 'top')
 
 c12subsplt
-#ggsave('extcamera2.png', c12subsplt, height = 4.5, units = 'in')
+ggsave('figure7.tiff', c12subsplt, height = 4.5, units = 'in', dpi=300)
 ```
 
 ## Do Camera Settings Make a Statistical Difference?
@@ -336,7 +334,7 @@ sigplt = ggplot(wsig.dat, aes(x = Photo, y = Count, colour = Note)) +
 
 sigplt
 
-ggsave('expcamera3.png', sigplt, height = 4, width = 5.5, units = 'in')
+ggsave('figure8.tiff', sigplt, height = 4, width = 5.5, units = 'in', dpi=300)
 
 ```
 So, does this mean that camera settings may need to be substrate-specific?

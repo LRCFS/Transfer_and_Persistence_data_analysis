@@ -729,7 +729,7 @@ trp12 = ggarrange(trp1, trp2, labels = c('A', 'B'), ncol = 2,
           common.legend = TRUE, legend = 'top')
 trp12
 
-#ggsave('transratio.png', trp12,  height = 4.5, units = 'in')
+ggsave('figure2.tiff', trp12,  height = 4.5, units = 'in', dpi=300)
 ```
 
 
@@ -785,7 +785,7 @@ ggplot(all.ratio %>%
   mytheme +
   theme_pubr()
 
-#ggsave("transratio_boxplot.png", height = 4, width=6, units = 'in')
+ggsave("figure3.tiff", height = 4.5, units = 'in', dpi=300)
 #kruskal.test(Ratio ~ Substrate, data = all.ratio.tmp)
 ```
 
@@ -876,7 +876,7 @@ tep2 = ggplot(eff60.dat, aes(x=numericFactorOrder(Mass), y = efficiency, group =
 tep12 = ggarrange(tep1, tep2, labels = c('A', 'B'), ncol = 2,
                   common.legend = TRUE)
 tep12
-#ggsave("transeff.png", tep12, height = 4, width = 6, units = 'in')
+ggsave("figure4.tiff", tep12, height = 4.5, units = 'in', dpi=300)
 
 
 ```
