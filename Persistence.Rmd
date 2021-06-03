@@ -1,12 +1,11 @@
 ---
 title: "Persistence Experiments"
-author: "Christian Cole"
+author: "Christian Cole (original author), Hervé Ménard (code editing), Niamh Nic Daéid (code editing)"
 output: 
   pdf_document: 
     highlight: kate
 fontsize: 11
 ---
-
 ```{r setup, include=FALSE}
 def.chunk.hook  <- knitr::knit_hooks$get("chunk")
 knitr::knit_hooks$set(chunk = function(x, options) {
@@ -51,11 +50,7 @@ inset_theme = theme_minimal() +
 
 # Analysis of Persistence Experiments
 
-Go through experiment sets and extract the persistence data. The data are
-defined by having "ObsType" != "Ndata".
-
-## Expt 1
-
+## Dataset A
 ```{r persA}
 # Read in A data
 my.dat = read_xlsx("dat/Counts_data.xlsx", sheet = "A")
@@ -72,7 +67,6 @@ persist.dat = my.dat %>% filter(
          TransferTime = `TransferTime (s)`,
          PersistenceTime = `PersistenceTime (min)`)
 
-
 # fix column types
 persist.dat$Count = as.numeric(persist.dat$Count)
 persist.dat$PersistenceTime = as.numeric(persist.dat$PersistenceTime)
@@ -83,21 +77,19 @@ persist.dat[persist.dat$Substrate == 'wool01', 'Substrate'] <- 'Wool'
 persist.dat[persist.dat$Substrate == 'Wool01', 'Substrate'] <- 'Wool'
 persist.dat[persist.dat$Substrate == 'Nylo01', 'Substrate'] <- 'Nylon'
 persist.dat[persist.dat$Substrate == 'Wool' & persist.dat$Experiment == '2', 'Substrate'] <- 'Nylon'
-
 # summarise the count data
-summ.dat = summarySE(persist.dat, measurevar = "Count", groupvars = c("Substrate", "PersistenceTime", "Experiment"))
+summ.dat = summarySE(persist.dat, measurevar = "Count", groupvars = c("Substrate", "PersistenceTime",
+                                                                      "Experiment"))
 knitr::kable(head(summ.dat), caption = "Summary of A Persistence Data")
-
 ```
 
-The data covers a large period of time - potentially weeks - so the time
-scale needs to be compressed somehow for ease of interpretation. Let's see
-what we can do.
-
-```{r mlplots}
 
 
-p1 = ggplot(summ.dat, aes(x=PersistenceTime, y = Count, group = Substrate, colour = Substrate, shape=Substrate)) +
+```{r mlplots,fig.height=3.9}
+
+
+p1 = ggplot(summ.dat, aes(x=PersistenceTime, y = Count, group = Substrate, colour =
+                            Substrate, shape=Substrate)) +
   geom_point(position = position_dodge(0.3)) +
   geom_errorbar(aes(ymin = Count-se, ymax = Count+se), width = 0.08) +
   xlim(c(-5,1500)) +
@@ -109,7 +101,8 @@ p1 = ggplot(summ.dat, aes(x=PersistenceTime, y = Count, group = Substrate, colou
   mytheme +
   theme_pubr()
 
-p2 = ggplot(summ.dat, aes(x=PersistenceTime, y = Count, group = Substrate, colour = Substrate, shape=Substrate)) +
+p2 = ggplot(summ.dat, aes(x=PersistenceTime, y = Count, group = Substrate, colour =
+                            Substrate, shape=Substrate)) +
   geom_point(position = position_dodge(0.3)) +
   geom_errorbar(aes(ymin = Count-se, ymax = Count+se), width = 0.08) +
   scale_color_brewer(palette = 'Paired') +
@@ -125,13 +118,7 @@ p1 + annotation_custom(ggplotGrob(p2), xmin = 700, xmax = 1600,
                        ymin = 20, ymax = 65)
 ```
 
-The data seems to be a smooth decay. Let's try some curve-fitting.
-
-This function SSasymp() a self-starting fucntion which attempts to find
-suitable initial parameters for perform a fit - here a non-linear least
-squares.
-
-Let's see the Nylon fit first
+Figure S1: Particle count for Nylon and Wool as receiver materials
 
 ```{r fits, echo=TRUE}
 # ideas taken from http://douglas-watson.github.io/post/2018-09_exponential_curve_fitting/
@@ -145,11 +132,11 @@ ny.nlm_error <- sqrt(mean(ny.fit.err^2))
 ny.fit
 ```
 
-On first impressions the fit looks fine. The residual error is: `r signif(ny.nlm_error)`
+The residual error is: `r signif(ny.nlm_error)`
 
-A plot of the data and the fit will allow a visual comparison.
 
-```{r fitplt}
+
+```{r fitplt,fig.height=3.9}
 pts = seq(0,max(summ.dat$PersistenceTime),length=200)
 gg.fit = data.frame(y=predict(ny.fit, data.frame(PersistenceTime = pts)), x= pts)
 
@@ -158,7 +145,8 @@ p1 = ggplot(summ.dat[summ.dat$Substrate == 'Nylon',], aes(x = PersistenceTime, y
        x = "Persistence Time (min)",
        y = "Particle Count") +
   geom_point(colour = '#a6cee3') + 
-  geom_errorbar(aes(ymin = Count-se, ymax = Count+se), width = 0.08, data = summ.dat[summ.dat$Substrate == 'Nylon',], colour = '#a6cee3') +
+  geom_errorbar(aes(ymin = Count-se, ymax = Count+se), width = 0.08, data =
+                  summ.dat[summ.dat$Substrate == 'Nylon',], colour = '#a6cee3') +
   geom_line(aes(x = x, y = y), data = gg.fit, colour = '#a6cee3') +
   xlim(c(-5,1500)) +
   mytheme + 
@@ -170,7 +158,8 @@ p2 = ggplot(summ.dat[summ.dat$Substrate == 'Nylon',], aes(x = PersistenceTime, y
   labs(x = "Persistence Time (min)",
        y = "Particle Count") +
   geom_point(colour = '#a6cee3') + 
-  geom_errorbar(aes(ymin = Count-se, ymax = Count+se), width = 0.08, data = summ.dat[summ.dat$Substrate == 'Nylon',], colour = '#a6cee3') +
+  geom_errorbar(aes(ymin = Count-se, ymax = Count+se), width = 0.08, data =
+                  summ.dat[summ.dat$Substrate == 'Nylon',], colour = '#a6cee3') +
   geom_line(aes(x = x, y = y), data = gg.fit, colour = '#a6cee3') +
   theme_pubr() +
   theme(axis.title = element_text(size = 8),
@@ -183,7 +172,7 @@ nplt <- p1 + annotation_custom(ggplotGrob(p2), xmin = 700, xmax = 1600,
 nplt
 ```
 
-The nylon data looks good, let's to the same with the wool data and compare.
+Figure S2: Curve fitting for Nylon as receiver material.
 
 ```{r woolfit}
 wl.fit = nls(Count ~ SSasymp(PersistenceTime, Countf, Count0, log_alpha), 
@@ -195,7 +184,7 @@ wl.fit
 ```
 Residual error:  `r signif(wl.nlm_error)`
 
-```{r woolfitplt}
+```{r woolfitplt,fig.height=3.9}
 # generate more points for smooth regression line
 pts = seq(0,max(summ.dat$PersistenceTime),length=200)
 gg.fit = data.frame(y=predict(wl.fit, data.frame(PersistenceTime = pts)), x= pts)
@@ -207,7 +196,8 @@ p1 = ggplot(summ.dat[summ.dat$Substrate == 'Wool',], aes(x = PersistenceTime, y 
        y = "Particle Count",
        caption = "Error bars: std error") +
   geom_point(colour = '#1f78b4') + 
-  geom_errorbar(aes(ymin = Count-se, ymax = Count+se), width = 0.08, data = summ.dat[summ.dat$Substrate == 'Wool',], colour = '#1f78b4') +
+  geom_errorbar(aes(ymin = Count-se, ymax = Count+se), width = 0.08,
+                data = summ.dat[summ.dat$Substrate == 'Wool',], colour = '#1f78b4') +
   geom_line(aes(x = x, y = y), data = gg.fit, colour = '#1f78b4') +
   xlim(c(-5,1500)) +
   mytheme +
@@ -218,7 +208,8 @@ p2 = ggplot(summ.dat[summ.dat$Substrate == 'Wool',], aes(x = PersistenceTime, y 
        x = "Persistence Time (min)",
        y = "Particle Count") +
   geom_point(colour = '#1f78b4') + 
-  geom_errorbar(aes(ymin = Count-se, ymax = Count+se), width = 0.08, data = summ.dat[summ.dat$Substrate == 'Wool',], colour = '#1f78b4') +
+  geom_errorbar(aes(ymin = Count-se, ymax = Count+se), width = 0.08,
+                data = summ.dat[summ.dat$Substrate == 'Wool',], colour = '#1f78b4') +
   geom_line(aes(x = x, y = y), data = gg.fit, colour = '#1f78b4') +
   theme_pubr() +
   theme(axis.title = element_text(size = 8),
@@ -231,34 +222,36 @@ wplt = p1 + annotation_custom(ggplotGrob(p2), xmin = 700, xmax = 1600,
 wplt
 ```
 
-```{r combplot}
+Figure S3: Curve fitting for Wool as receiver material.
 
+```{r combplot,fig.height=4.5}
 arrplot = ggarrange(nplt + rremove('x.title'), wplt, labels = c('A', 'B'), nrow = 2)
-
+#ggsave("persistence.png", arrplot, height = 4.5, units = 'in')
 arrplot
-#ggsave("figure5.tiff", arrplot, height = 4.5, units = 'in', dpi=300)
 ```
 
+Figure S4: Comparison between (A) Nylon and (B) Wool as receiver materials 
+
 ```{r}
+summ.dat$Experiment <- as.numeric(summ.dat$PersistenceTime)
 cmp.fit.dat = summ.dat %>% 
   group_by(Substrate) %>% 
-  do(fit = nls(Count ~ SSasymp(PersistenceTime, Countf, Count0, log_alpha), data = .)) %>% 
-  tidy(fit) %>% 
+  do(fit = nls(Count ~ SSasymp(PersistenceTime, Countf, Count0, log_alpha), data = .)) %>%
+  ungroup %>%
+  mutate(fitCoef = map(fit,tidy)) %>%
+  select(Substrate, fitCoef) %>%
+  unnest(fitCoef) %>%
   select(Substrate, term, estimate) %>% 
-  spread(term, estimate) %>% 
-  mutate(alpha = exp(log_alpha))
+   spread(term, estimate) %>% 
+   mutate(alpha = exp(log_alpha))
 knitr::kable(cmp.fit.dat)
 ```
 
-Interestingly the decay rate (alpha) is almost the same for the two materials.
+## Datasets B, C & D
 
-## Expt 2, 3 & 4
+No persistence data available. Data acquisition focussed on the transfer study only.
 
-No persistence data.
-
-## Expt 5
-
-The only other dataset with persistence results is E 
+## Dataset E
 
 ```{r readEm}
 # Read in Em's data
@@ -285,16 +278,15 @@ persist.dat$Experiment = as.character(persist.dat$Experiment)
 persist.dat$Replicate = as.character(persist.dat$Replicate)
 
 # summarise the count data
-summ.dat = summarySE(persist.dat, measurevar = "Count", groupvars = c("Substrate", "PersistenceTime", "Experiment", "Note"))
+summ.dat = summarySE(persist.dat, measurevar = "Count",
+                     groupvars = c("Substrate", "PersistenceTime", "Experiment", "Note"))
 knitr::kable(summ.dat, caption = "Summary of E Persistence Data")
 
 ```
 
-However, there are nowhere near enough replicates to do anything with the data. Only have 2 reps for 0, 30, 60 and 1440 minutes. All the rest are single-point. #sadface
+Insufficient number of replicates for comprehensive analysis: only 2 replicates for 0, 30, 60 and 1440 minutes, all the other results are single-point.
 
-The difference between experiments '7' and '8' are the camera settings 'C1' and 'C2' which, if they weren't, too different could combine to get more replicates. However, the 'C2' counts are consistently higher than 'C1' suggesting that they're not the same and cannot be considered replicates.
-
-```{r plotE}
+```{r plotE,fig.height=3.9}
 
 summ.dat = persist.dat %>% 
   group_by(Substrate, PersistenceTime, Note) %>%
@@ -314,4 +306,4 @@ ggplot(summ.dat, aes(x=PersistenceTime, y = Mean, colour = Note)) +
   theme_pubr()
   
 ```
-Yup. Data are all over the place. Can't use this in the paper.
+Figure S5: Nylon as receiver material, comparison between camera settings.

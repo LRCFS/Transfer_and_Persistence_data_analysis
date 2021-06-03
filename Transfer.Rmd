@@ -1,7 +1,7 @@
 ---
-title: "Transfer and Persistence Data Analysis"
-author: "Christian Cole"
-output: pdf_document
+title: "Transfer Data Analysis"
+author: "Christian Cole (original author), Hervé Ménard (code editing), Niamh Nic Daéid (code editing)"
+output:  pdf_document
 ---
 
 ```{r setup, include=FALSE}
@@ -30,12 +30,8 @@ mytheme = theme_minimal() +
 
 ```
 
+# Dataset A
 
-## Plotting of Transfer Experiment Results - for A
-
-Starting with the simplest dataset e.g. with few samples and combinations. Using the combined spreadsheet "Counts_data.xlsx as all the data should be in there and is the source of the paper's figures.
-
-The Transfer experiments are defined by the "Time" column is "0" meaning there has been no Persistence performed yet. By selecting only those that value we can ignore the Persistence experiments (for the time being).
 
 ```{r readA}
 # Read in A
@@ -48,7 +44,7 @@ transfer.dat = my.dat %>% filter(`PersistenceTime (min)` == 0 & Experiment %in% 
   dplyr::rename(Mass = `Mass (g)`, 
          TransferTime = `TransferTime (s)`)
 
-knitr::kable(head(transfer.dat, 20), caption = "'Head' of A Transfer Data")
+knitr::kable(head(transfer.dat, 20), caption = "'Head' (i.e. first 20 rows) of A Transfer Data")
 
 ```
 
@@ -91,7 +87,7 @@ ratio.dat = cbind(Mass = rep(1000,2), TransferTime = rep(60,2), Substrate = c("W
 knitr::kable(ratio.dat, caption = "Summary Data for A Transfer Ratios")
 ```
 
-```{r plotA}
+```{r plotA, fig.height= 4}
 
 ggplot(summ.dat, aes(x = Experiment, y = Ratio)) + 
   geom_point(size=2.2) +
@@ -101,10 +97,11 @@ ggplot(summ.dat, aes(x = Experiment, y = Ratio)) +
   labs(title = "Analysis of Transfer Ratios",
        x = "Receiver Material",
        y = "Transfer Ratio")
-
 ```
 
-```{r ploteA}
+Figure S1: Transfer Ratios Dataset A
+
+```{r ploteA, fig.height= 4}
 
 eff.dat = summarySE(final.dat, measurevar = "Efficiency", groupvars = c("Experiment"))
 
@@ -120,6 +117,7 @@ ggplot(eff.dat, aes(x = Experiment, y = Efficiency)) +
 
 ```
 
+Figure S2: Transfer Efficiency dataset A.
 
 ```{r alldat, eval=FALSE}
 
@@ -135,7 +133,8 @@ all.eff = cbind(Set = rep("A", 2), Mass = rep(1000,2), TransferTime = rep(60,2),
 
 ```
 
-## Read B Data
+# Dataset B
+
 
 ```{r readB}
 # Read in B
@@ -204,6 +203,8 @@ ggplot(ratio.dat, aes(x = numericFactorOrder(TransferTime), y = Ratio)) +
 
 ```
 
+Figure S3: Transfer Ratios dataset B.
+
 ```{r ploteB}
 
 eff.dat = summarySE(final.dat, measurevar = "Efficiency", groupvars = c("Mass","TransferTime","Substrate"))
@@ -221,11 +222,12 @@ ggplot(eff.dat, aes(x = numericFactorOrder(TransferTime), y = Efficiency)) +
 
 
 ```
-Hmm. Getting infinity values for some of the datapoints. To investigate.
 
-## Read C Data
+Figure S4: Transfer Efficiency dataset B.
 
-In trying to replicate the above for C data, I found that the "Time" column didn't make sense (an incrementing value per row) so from now on will use the cleaned data which was used for the file-renamer.
+\newpage
+# Dataset C
+
 
 ```{r readC}
 # Read in C data
@@ -288,6 +290,8 @@ ggplot(ratio.dat, aes(x = numericFactorOrder(TransferTime), y = Ratio)) +
 
 ```
 
+Figure S5: Transfer Ratio dataset C.
+
 ```{r ploteC}
 
 eff.dat = summarySE(final.dat, measurevar = "Efficiency", groupvars = c("Mass","TransferTime","Substrate"))
@@ -307,7 +311,10 @@ ggplot(eff.dat, aes(x = numericFactorOrder(TransferTime), y = Efficiency)) +
 
 ```
 
-## D Data
+Figure S6: Transfer Efficiency dataset C.
+
+\newpage
+## Dataset D
 
 
 ```{r readD}
@@ -376,6 +383,8 @@ ggplot(ratio.dat, aes(x = numericFactorOrder(TransferTime), y = Ratio)) +
 
 ```
 
+Figure S7: Transfer Ratio dataset D.
+
 ```{r ploteD}
 
 eff.dat = summarySE(final.dat, measurevar = "Efficiency", groupvars = c("Mass","TransferTime","Substrate"))
@@ -396,15 +405,11 @@ ggplot(eff.dat, aes(x = numericFactorOrder(TransferTime), y = Efficiency)) +
 
 ```
 
-## E Data
+Figure S8: Transfer Efficiency dataset D.
 
-This data is a little different from the others as this study includes an 
-analysis of camera settings - specified in the "Note" column as C1 or C2.
-That information is included in the analysis and the two camera settings
-reported separately.
+\newpage
+## Dataset E
 
-In the comparison to the other datasets only the C1 camera data is used,
-for pragmatic reasons.
 
 ```{r readE}
 # Read in E data
@@ -423,6 +428,7 @@ knitr::kable(head(transfer.dat, 20), caption = "'Head' of E Transfer Data")
 
 ```
 
+\newpage
 ```{r mungeE}
 # fix column types
 transfer.dat$Count = as.numeric(transfer.dat$Count)
@@ -463,11 +469,9 @@ ratio.dat = ratio.dat[ratio.dat$N > 1,]
 knitr::kable(ratio.dat, caption = "Summary Data for E Transfer Ratios")
 ```
 
-Added an extra column for "Experiment" in addition to "Substrate" here as there seems to be too many replicates?? Need to investigate further.
+```{r plottE, fig.height= 8}
 
-```{r plottE}
-
-ggplot(ratio.dat[ratio.dat$Note == 'C1',], aes(x = numericFactorOrder(TransferTime), y = Ratio)) + 
+tc1 = ggplot(ratio.dat[ratio.dat$Note == 'C1',], aes(x = numericFactorOrder(TransferTime), y = Ratio)) + 
   geom_point(size=1) +
   geom_errorbar(aes(ymin = Ratio-se, ymax = Ratio+se), width = 0.08) +
   geom_point(colour = "white", size = 0.7) +
@@ -477,7 +481,7 @@ ggplot(ratio.dat[ratio.dat$Note == 'C1',], aes(x = numericFactorOrder(TransferTi
        y = "Transfer Ratio") +
   facet_grid(numericFactorOrder(Mass) ~ Substrate)
 
-ggplot(ratio.dat[ratio.dat$Note == 'C2',], aes(x = numericFactorOrder(TransferTime), y = Ratio)) + 
+tc2 = ggplot(ratio.dat[ratio.dat$Note == 'C2',], aes(x = numericFactorOrder(TransferTime), y = Ratio)) + 
   geom_point(size=1) +
   geom_errorbar(aes(ymin = Ratio-se, ymax = Ratio+se), width = 0.08) +
   geom_point(colour = "white", size = 0.7) +
@@ -487,15 +491,22 @@ ggplot(ratio.dat[ratio.dat$Note == 'C2',], aes(x = numericFactorOrder(TransferTi
        y = "Transfer Ratio") +
   facet_grid(numericFactorOrder(Mass) ~ Substrate)
 
+tc12 = ggarrange(tc1, tc2, labels = c('A', 'B'), nrow = 2,
+                  common.legend = TRUE)
 
+tc12
 ```
-
-```{r ploteE}
+Figure S9: Transfer Ratio dataset E. (A) Camera setting C1, and (B) Camera setting C2.
+\newpage
+```{r ploteF}
 
 eff.dat = summarySE(final.dat, measurevar = "Efficiency", groupvars = c("Mass","TransferTime","Substrate"))
 
 knitr::kable(eff.dat, caption = "Efficiency data for E")
+```
 
+
+```{r ploteE}
 ggplot(eff.dat, aes(x = numericFactorOrder(TransferTime), y = Efficiency)) + 
   geom_point(size=1) +
   geom_errorbar(aes(ymin = Efficiency-se, ymax = Efficiency+se), width = 0.08) +
@@ -509,11 +520,11 @@ ggplot(eff.dat, aes(x = numericFactorOrder(TransferTime), y = Efficiency)) +
 
 ```
 
-## Combined Analysis - counts
+Figure S10: Transfer Efficiency dataset E.
 
-Currently all the photo count data is in wide format. Reformat into long format so we can do a comparison of particle counts per photo more easily.
+\newpage
+# Combined Analysis - counts
 
-Firstly, look at all the data.
 
 ```{r countcomp1}
 
@@ -531,7 +542,7 @@ knitr::kable(head(all_counts.dat, 10), caption = "Summary statistics of particle
 
 ```
 
-```{r countcomp2}
+```{r countcomp2,fig.height=3.9}
 ggplot(all_counts.dat, aes(x = Set, y = count)) + 
   labs(title = 'Particle Counts Per Photo',
        subtitle = 'All materials, times and masses',
@@ -543,10 +554,9 @@ ggplot(all_counts.dat, aes(x = Set, y = count)) +
 #ggsave('cnt1.png')
 ```
 
-Now, let's see the difference between wool and nylon.
+Figure S11: Particle Counts Per Photo, all datasets, materials, masses and times.
 
-
-```{r countcomp3}
+```{r countcomp3,fig.height=3.94}
 all_counts.dat %>% filter(Substrate == 'Wool01') %>%
 ggplot(aes(x = Set, y = count)) + 
   labs(title = 'Particle Counts Per Photo',
@@ -560,8 +570,9 @@ ggplot(aes(x = Set, y = count)) +
 
 ```
 
+Figure S12: Particle counts per photo, Wool, all datasets, masses and times.
 
-```{r countcomp4}
+```{r countcomp4,fig.height= 3.9}
 all_counts.dat %>% filter(Substrate == 'Nylo01') %>%
 ggplot(aes(x = Set, y = count)) + 
   labs(title = 'Particle Counts Per Photo',
@@ -575,9 +586,9 @@ ggplot(aes(x = Set, y = count)) +
 
 ```
 
-And, finally, wool and nylon for the ubiquitous 60 seconds and 1000 grams.
+Figure S13: Particle counts per photo, Nylon, all datasets, masses and times.
 
-```{r countcomp5}
+```{r countcomp5,fig.height= 3.9}
 all_counts.dat %>% filter(Substrate == 'Wool01', Mass == '1000', TransferTime == '60') %>%
 ggplot(aes(x = Set, y = count)) + 
   labs(title = 'Particle Counts Per Photo',
@@ -591,8 +602,9 @@ ggplot(aes(x = Set, y = count)) +
 
 ```
 
+Figure S14: Particle counts per photo, Wool, all datasets, 60 s, 1000 g.
 
-```{r countcomp6}
+```{r countcomp6,fig.height= 3.9}
 all_counts.dat %>% filter(Substrate == 'Nylo01', Mass == '1000', TransferTime == '60') %>%
 ggplot(aes(x = Set, y = count)) + 
   labs(title = 'Particle Counts Per Photo',
@@ -606,11 +618,9 @@ ggplot(aes(x = Set, y = count)) +
 
 ```
 
+Figure S15: Particle counts per photo, Nylon, all datasets, 60 s, 1000 g.
 
-
-So a simulation (see the 'simul.Rmd' doc) suggests that when P3 - P1 approaches 0 the Transfer Ratio values go very high. Let's see what the distribution of P3 - P1 looks like in all our experiments.
-
-```{r p3minusp1}
+```{r p3minusp1,fig.height= 3.9}
 
 # redo long format now including the P3-P1 difference 
 all_counts.dat = all.dat %>% 
@@ -646,7 +656,9 @@ all_counts.dat %>%
 
 ```
 
-```{r}
+Figure S16: Particle counts per photo, all datasets, materials, masses and times. Included top left: Donor after UV deposition (Photo 3) - Donor Background (Photo 1).
+
+```{r,fig.height= 3.9}
 
 all_counts.dat %>% 
   filter(Substrate == 'Wool01') %>%
@@ -662,13 +674,13 @@ all_counts.dat %>%
 
 ```
 
-There are no standout differences between the experiment. Oh well...
+Figure S17: Particle counts per photo, Wool, all datasets, masses and time. Included top left: Donor after UV deposition (Photo 3) - Donor Background (Photo 1).
 
-## Combined Analysis - ratios
+\newpage
+# Combined Analysis - ratios
 
-For the purposes of the paper let's look at the 1000g set for wool and nylon separately.
 
-```{r plottr1}
+```{r plottr1,fig.height= 3.9}
 
 all.dat$Mass = as.numeric(all.dat$Mass)
 all.dat$TransferTime = as.numeric(all.dat$TransferTime)
@@ -703,11 +715,7 @@ trp1 = ggplot(m1000.dat[m1000.dat$TransferTime != '10',], aes(x=numericFactorOrd
   mytheme +
   theme_pubr()
 
-trp1 
-```
-
-
-```{r plottr2}
+#trp1 
 
 t60.dat =  all.ratio %>% filter(TransferTime == 60 & Substrate %in% c("Wool", "Nylon"))
 
@@ -724,16 +732,16 @@ trp2 = ggplot(t60.dat, aes(x=numericFactorOrder(Mass), y = ratio, group = Set, s
   #mytheme +
   theme_pubr()
 
-trp2
 trp12 = ggarrange(trp1, trp2, labels = c('A', 'B'), ncol = 2,
           common.legend = TRUE, legend = 'top')
 trp12
 
-ggsave('figure2.tiff', trp12,  height = 4.5, units = 'in', dpi=300)
+#ggsave('transratio.png', trp12,  height = 4.5, units = 'in')
 ```
 
+Figure S18: Transfer ratios for all datasets. (A) for mass = 1000 g and all times, (B) for time = 60 s and all masses.
 
-```{r plot60w, eval = FALSE}
+```{r plot60w, eval = FALSE,fig.height= 3.9}
 
 wool60.dat = all.ratio %>% filter(TransferTime == 60 & Substrate == "Wool")
 #wool60.dat
@@ -771,9 +779,8 @@ ggplot(nylon60.dat, aes(x=numericFactorOrder(Mass), y = ratio, group = Set, colo
 
 ```
 
-Seeing as there's very little effect from mass or time let's combine and see if receiver material has an effect.
 
-```{r}
+```{r,fig.height= 3.9}
 
 # plot boxplots
 ggplot(all.ratio %>% 
@@ -785,13 +792,13 @@ ggplot(all.ratio %>%
   mytheme +
   theme_pubr()
 
-ggsave("figure3.tiff", height = 4.5, units = 'in', dpi=300)
+#ggsave("transratio_boxplot.png", height = 4, width=6, units = 'in')
 #kruskal.test(Ratio ~ Substrate, data = all.ratio.tmp)
 ```
 
-What does the count data look like for a given photo?
+Figure S19: Transfer ratios for Wool and Nylon, variation between dataset (researcher).
 
-```{r}
+```{r,fig.height= 4}
 
 ggplot(all.dat, aes(x=P3)) + geom_density() +
   labs(title = "Distribution of Particle Counts",
@@ -801,9 +808,9 @@ ggplot(all.dat, aes(x=P3)) + geom_density() +
 
 ```
 
+Figure S20: Particle count distribution for Photo 3 (donor after UV deposition) between datasets.
 
-
-```{r plotallratio}
+```{r plotallratio, fig.height=3.9,fig.width= 8}
 
 # for better labelling add a new mass column with a 'g'
 all.ratio$Massg = paste0(all.ratio$Mass, "g")
@@ -823,13 +830,11 @@ ggplot(all.ratio, aes(x = numericFactorOrder(TransferTime), y = ratio, group = S
 
 ```
 
-### Transfer Efficiencies
+Figure S21: Summary of all transfer ratios.
 
-A quick look at comparative transfer efficiency data.
-
-Not sure what the transfer efficiency is showing here? What do values >1 mean, greater than 100% efficiency or what?
-
-```{r ploteff}
+\newpage
+# Transfer Efficiencies
+```{r ploteff,fig.height= 3.9}
 # some replicate efficiencies are infinite 
 # remove them now
 all.final = all.final[is.finite(all.final$Efficiency),]
@@ -854,11 +859,11 @@ tep1 = ggplot(eff1000.dat[eff1000.dat$Substrate %in% c('Wool', 'Nylon'),], aes(x
   facet_grid(Substrate ~ .) +
   theme_pubr()
 
-tep1
+#tep1
 ```
 
 
-```{r ploteff60}
+```{r ploteff60,fig.height= 3.9}
 eff60.dat = all.eff %>% filter(TransferTime == 60 & Substrate != "Denim")
 
 tep2 = ggplot(eff60.dat, aes(x=numericFactorOrder(Mass), y = efficiency, group = Set, shape=Set, colour = Substrate, fill = Substrate)) +
@@ -876,12 +881,14 @@ tep2 = ggplot(eff60.dat, aes(x=numericFactorOrder(Mass), y = efficiency, group =
 tep12 = ggarrange(tep1, tep2, labels = c('A', 'B'), ncol = 2,
                   common.legend = TRUE)
 tep12
-ggsave("figure4.tiff", tep12, height = 4.5, units = 'in', dpi=300)
+#ggsave("transeff.png", tep12, height = 4, width = 6, units = 'in')
 
 
 ```
 
-```{r plotalleff}
+Figure S22: Transfer efficiencies for all datasets. (A) for mass = 1000 g and all times, (B) for time = 60 s and all masses.
+
+```{r plotalleff, fig.height=3.9,fig.width= 8}
 
 all.eff$Massg = paste0(all.eff$Mass, "g")
 
@@ -900,4 +907,4 @@ ggplot(all.eff, aes(x = numericFactorOrder(TransferTime), y = efficiency, group 
 
 ```
 
-
+Figure S23: Summary of all transfer efficiencies.
