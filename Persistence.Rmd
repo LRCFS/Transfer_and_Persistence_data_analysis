@@ -55,8 +55,7 @@ inset_theme = theme_minimal() +
 # Read in A data
 my.dat = read_xlsx("dat/Counts_data.xlsx", sheet = "A")
 
-# only use the persistence experiments for Groups 1 & 2. Groups 3-6 do not 
-# have enough replicates to be meaningful
+# use the persistence experiments for Groups 1 & 2.
 persist.dat = my.dat %>% filter(
       Substrate != 'Cott01' & 
       Experiment %in% c(1,2) & 
@@ -254,13 +253,11 @@ No persistence data available. Data acquisition focussed on the transfer study o
 ## Dataset E
 
 ```{r readEm}
-# Read in Em's data
+# Read in E data
 my.dat = read_xlsx("dat/Counts_data.xlsx", sheet = "E", trim_ws = TRUE, col_types = "text")
 
 
-# only use expts 7 & 8 as they're the only ones
-# with persistence data. Plus for some reason
-# the persistence replicates are numbered from 8
+# use exp 7 & 8
 persist.dat = my.dat %>% filter(
       Substrate != 'Cott01' & 
       Experiment %in% c(7,8) & 
